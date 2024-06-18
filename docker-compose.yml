@@ -1,0 +1,8 @@
+services:
+  fortytwo:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - .:/code
+    restart: unless-stopped
