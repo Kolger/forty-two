@@ -13,7 +13,7 @@ Forty-two is a Telegram bot that allows you to create your own ChatGPT in Telegr
 ### 1. Create .env file with the following content:
 
 ```
-TELEGRAM_API_KEY=your_telegram_api_key
+TELEGRAM_TOKEN=your_telegram_api_key
 OPENAI_API_KEY=your_openai_api_key
 ```
 ### 2. Run bot
@@ -36,7 +36,7 @@ python main.py
 
 | Variable                | Description                                                                                         | Default Value                                   |
 |-------------------------|-----------------------------------------------------------------------------------------------------|-------------------------------------------------|
-| `TELEGRAM_API_KEY`      | Telegram API key.                                                                                   | -                                               |
+| `TELEGRAM_TOKEN`        | Telegram API key.                                                                                   | -                                               |
 | `OPENAI_API_KEY`        | OpenAI API key.                                                                                     | -                                               |
 | `DB_STRING`             | Database connection string.                                                                         | sqlite+aiosqlite:///db.sqlite3                  |
 | `MAX_COMPLETION_TOKENS` | Maximum tokens for completion.                                                                      | 4096                                            |
