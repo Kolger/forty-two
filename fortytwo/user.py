@@ -8,7 +8,7 @@ async def summarize(user_id, s):
     provider: BaseProvider = OpenAIProvider()
     chat_history = ""
     for message in messages:
-        chat_history += f'Question: \n {message.message_text or ''} \n Answer: {message.answer or ''}\n\n'
+        chat_history += f"Question: \n {message.message_text or ''} \n Answer: {message.answer or ''}\n\n"
 
     #chat_history = [{"role": "user", "content": str(chat_history)}]
     system_prompt = "Summarize this dialog for me in 1000 characters or less. Answer USING ONLY English not another language."
