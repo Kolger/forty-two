@@ -33,9 +33,8 @@ class TelegramBot:
     async def handle_text(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         telegram_user = TelegramUser(id=tg_update.message.chat.id, username=tg_update.message.chat.username,
                                      title=tg_update.message.chat.title)
-        manager = Manager()
 
-        process_text_task = asyncio.ensure_future(manager.process_text(telegram_user, tg_update.message.text))
+        process_text_task = asyncio.ensure_future(self.manager.process_text(telegram_user, tg_update.message.text))
         await self.__send_typing_until_complete(tg_update, process_text_task)
 
         messages = await process_text_task
@@ -69,7 +68,7 @@ class TelegramBot:
         async with async_session() as s:
             user = await User.get_by_chat_id(tg_update.message.chat.id, s)
             await Message.clear_by_user(user.id, s)
-        await tg_update.message.reply_text('RESETED')
+        await tg_update.message.reply_text('Your dialog history has been cleared.')
 
     async def summarize(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
         async with async_session() as s:
@@ -84,8 +83,8 @@ class TelegramBot:
             try:
                 await tg_update.message.reply_text(message, reply_to_message_id=tg_update.message.message_id, parse_mode=ParseMode.MARKDOWN)
             except BadRequest as e:
-                # If we received a BadRequest, it could be because the message contains a character that is not supported by markdown
-                # In this case, we will send the message without markdown
+                # If we receive a BadRequest, it could be because the message contains a character that is not supported by Markdown.
+                # In this case, we will send the message without Markdown.
                 await tg_update.message.reply_text(message, reply_to_message_id=tg_update.message.message_id)
 
     async def __send_typing_until_complete(self, update: Update, task: asyncio.Task):

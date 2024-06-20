@@ -1,6 +1,3 @@
-import base64
-from fortytwo.settings import Settings
-
 import asyncio
 import base64
 import io
@@ -19,7 +16,7 @@ class Manager:
     def __init__(self):
         self.provider: BaseProvider = OpenAIProvider()
 
-    async def process_text(self, telegram_user: TelegramUser, telegram_message: str):
+    async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[str]:
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
                 return ["You don't have access to a bot. Please contact the administrator.", ]
