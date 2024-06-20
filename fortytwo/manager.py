@@ -10,6 +10,7 @@ from fortytwo.providers.base import BaseProvider
 from fortytwo.providers.openai import OpenAIProvider
 from fortytwo.settings import Settings
 from fortytwo.types import TelegramUser, TelegramMessage
+from fortytwo.logger import logger
 
 
 class Manager:
@@ -36,6 +37,8 @@ class Manager:
             message.prompt_tokens = answer.prompt_tokens
 
             await s.commit()
+
+            await self.__log_message(telegram_user, message, 'TEXT')
 
             ret_messages = [str(answer), ]
 
@@ -126,6 +129,8 @@ class Manager:
 
             ret_messages = [str(answer), ]
 
+            await self.__log_message(telegram_user, message, 'IMAGE')
+
             if answer.total_tokens > Settings.MAX_TOTAL_TOKENS:
                 sum_results = await self.process_summarize(user.id, s)
                 ret_messages.append(f'*Your dialog was summorized:* \n\n{sum_results}')
@@ -193,6 +198,14 @@ class Manager:
             return False
 
         return True
+
+    async def __log_message(self, telegram_user: TelegramUser, message: Message, prefix: str = 'TEXT'):
+        logger.info(f"{prefix} | User: {telegram_user.username}\n"
+                    f"Q: {message.message_text}\n"
+                    f"A: {message.answer}\n"
+                    f"Prompt tokens: {message.prompt_tokens}, "
+                    f"Completion tokens: {message.completion_tokens}, "
+                    f"Total tokens: {message.total_tokens}")
 
     async def process_summarize(self, user_id, s):
         chat_history = await self.__prepare_chat_history(user_id, s)

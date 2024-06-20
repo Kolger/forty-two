@@ -46,6 +46,7 @@ python main.py
 | SYSTEM_PROMPT         | System prompt for GPT.                                                                                                                                                                  | You are a friendly assistant, your name is Rick |
 | OPENAI_MODEL          | OpenAI model.                                                                                                                                                                           | gpt-4o                                          |
 | ALLOWED_USERS         | Comma-separated list of Telegram users who can interact with the bot. You can use both Telegram IDs or Usernames. If None, everyone can interact with the bot. Example: durov,238373289 | None                                            |
+| LOG_MESSAGES          | Log user messages to a file and the console.                                                                                                                                            | False                                           |
 
 ## In development
 

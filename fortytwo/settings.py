@@ -12,3 +12,4 @@ class Settings:
     SYSTEM_PROMPT = os.environ.get('SYSTEM_PROMPT', "You are friendly assistant, your name is Rick")
     OPENAI_MODEL = os.environ.get('OPENAI_MODEL', 'gpt-4o')
     ALLOWED_USERS = os.environ.get('ALLOWED_USERS', None)
+    LOG_MESSAGES = os.environ.get('LOG_MESSAGES', False)
