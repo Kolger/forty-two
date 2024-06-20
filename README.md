@@ -5,6 +5,7 @@ Forty-two is a Telegram bot that allows you to create your own ChatGPT in Telegr
 - East to use and deploy. You have to just set Telegram and OpenAI API keys and run the bot.
 - GPT Vision. You can send images to bot and ask questions about them.
 - Track your conversation history for GPT.
+- Limit users who can interact with the bot.
 - Fully asynchronous.
 - MIT License.
 
@@ -36,21 +37,21 @@ python main.py
 ## Settings
 
 
-| Variable                | Description                                                                                         | Default Value                                   |
-|-------------------------|-----------------------------------------------------------------------------------------------------|-------------------------------------------------|
-| `TELEGRAM_TOKEN`        | Telegram API key.                                                                                   | -                                               |
-| `OPENAI_API_KEY`        | OpenAI API key.                                                                                     | -                                               |
-| `DB_STRING`             | Database connection string.                                                                         | sqlite+aiosqlite:///db.sqlite3                  |
-| `MAX_COMPLETION_TOKENS` | Maximum tokens for completion.                                                                      | 4096                                            |
-| `MAX_TOTAL_TOKENS`      | Maximum tokens for total output. If OpenAI uses more of this amount, bot will summarize user input. | 10000                                           |
-| `SYSTEM_PROMPT`         | System prompt for GPT.                                                                              | "You are friendly assistant, your name is Rick" |
-| `OPENAI_MODEL`          | OpenAI model.                                                                                       | "gpt-4o"                                        |
+| Variable                | Description                                                                                                                                                                                  | Default Value                                   |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
+| `TELEGRAM_TOKEN`        | Telegram API key.                                                                                                                                                                            | -                                               |
+| `OPENAI_API_KEY`        | OpenAI API key.                                                                                                                                                                              | -                                               |
+| `DB_STRING`             | Database connection string.                                                                                                                                                                  | sqlite+aiosqlite:///db.sqlite3                  |
+| `MAX_COMPLETION_TOKENS` | Maximum tokens for completion.                                                                                                                                                               | 4096                                            |
+| `MAX_TOTAL_TOKENS`      | Maximum tokens for total output. If OpenAI uses more of this amount, bot will summarize user input.                                                                                          | 10000                                           |
+| `SYSTEM_PROMPT`         | System prompt for GPT.                                                                                                                                                                       | "You are friendly assistant, your name is Rick" |
+| `OPENAI_MODEL`          | OpenAI model.                                                                                                                                                                                | "gpt-4o"                                        |
+| `ALLOWED USERS`         | List, separated by comma, of Telegram users who can interact with the bot. You can use both Telegram IDs or Usernames. If None, everyone can interact with the bot. Example: durov,238373289 | None                                            |
 
 
 ## In development
 
 - DALL-E generation.
-- Settings for allow only specific Telegram users to use the bot.
 
 ## License
 
