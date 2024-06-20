@@ -1,7 +1,6 @@
-openai==1.33.0
 python-dotenv==1.0.1
 python-telegram-bot==21.3
 aiohttp==3.9.5
 sqlalchemy[asyncio]
-alembic
-aiosqlite
+alembic==1.13.1
+aiosqlite==0.20.0

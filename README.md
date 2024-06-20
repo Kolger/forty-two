@@ -17,20 +17,7 @@ TELEGRAM_TOKEN=your_telegram_api_key
 OPENAI_API_KEY=your_openai_api_key
 ```
 
-### 2. Apply migrations to create tables:
-
-With docker-compose:
-
-```bash
-docker-compose exec -it fortytwo alembic upgrade head
-```
-
-Alternatively, you can setup the bot without docker:
-```bash
-alembic upgrade head
-```
-
-### 3. Run bot
+### 2. Run bot
 
 With docker-compose:
 
@@ -38,10 +25,11 @@ With docker-compose:
 docker-compose up -d
 ```
 
-Run without docker-compose: 
+Run without Docker: 
 
 ```bash
 pip install -r requirements.txt
+alembic upgrade head
 python main.py
 ```
 
