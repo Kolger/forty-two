@@ -32,7 +32,6 @@ class TelegramBot:
         self.application.add_handler(CommandHandler('reset', self.reset))
         self.application.add_handler(CommandHandler('summarize', self.summarize))
 
-
     async def handle_text(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         async with async_session() as s:
             # user = (await s.execute(select(User).where(User.chat_id == update.message.chat.id))).scalar()
@@ -43,15 +42,7 @@ class TelegramBot:
                 s.add(user)
                 await s.commit()
 
-            # get latest messages
-            # messages = (await s.execute(select(Message).where(Message.user == user.id))).scalars().all()
-            #messages = await Message.get_by_user(user.id, s)
-            #print(messages)
             chat_history = await self.__prepare_chat_history(user.id, s)
-
-            #for message in messages:
-            #    chat_history.append(UserSchema(content=message.message_text or '', role="user"))
-            #    chat_history.append(AssistantSchema(content=message.answer or '', role="assistant"))
 
             message = Message(user_id=user.id, message_text=tg_update.message.text)
             s.add(message)
@@ -75,8 +66,6 @@ class TelegramBot:
                 sum = await self.__summarize(user.id, s)
                 await tg_update.message.reply_text("summarize...", reply_to_message_id=tg_update.message.message_id)
                 await tg_update.message.reply_text(sum, reply_to_message_id=tg_update.message.message_id)
-            # sum = await summarize(user.id, s)
-            # await update.message.reply_text(sum, reply_to_message_id=update.message.message_id)
 
     async def handle_image(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         photo_file = await tg_update.message.photo[-1].get_file()
@@ -99,7 +88,7 @@ class TelegramBot:
             chat_history = []
 
             if not tg_update.message.media_group_id:
-                question = tg_update.message.caption
+                question = tg_update.message.caption or "What is on the image?"
                 chat_history = await self.__prepare_chat_history(user.id, s)
                 message = Message(user_id=user.id, message_text=question)
                 s.add(message)
@@ -139,6 +128,9 @@ class TelegramBot:
                         if picture.caption:
                             question = picture.caption
 
+                    if question is None:
+                        question = "What is on the images?"
+
                     message = Message(user_id=user.id, message_text=question)
                     s.add(message)
                     await s.commit()
@@ -151,6 +143,7 @@ class TelegramBot:
                     await s.commit()
                 else:
                     return None
+
             image_task = asyncio.ensure_future(self.provider.image(pictures_base64, question=question, chat_history=chat_history))
             await self.__send_typing_until_complete(tg_update, image_task)
             answer = await image_task
@@ -178,8 +171,6 @@ class TelegramBot:
         chat_history = []
 
         for message in messages:
-            #chat_history.append(AssistantSchema(content=message.answer or '', role="assistant"))
-
             assistant_message = {
                 "role": "assistant",
                 "content": [
@@ -202,7 +193,6 @@ class TelegramBot:
 
             pictures = (await session.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
             for picture in pictures:
-                print("11111", picture)
                 user_message['content'].append(
                     {
                         "type": "image_url",
@@ -219,7 +209,6 @@ class TelegramBot:
 
     async def __summarize(self, user_id, s):
         chat_history = await self.__prepare_chat_history(user_id, s)
-        # chat_history = [{"role": "user", "content": str(chat_history)}]
         system_prompt = "Summarize this dialog for me. Answer USING ONLY English not another language."
 
         summarized_dialog = await self.provider.text(question=system_prompt, system_prompt=system_prompt, chat_history=chat_history)
@@ -229,7 +218,6 @@ class TelegramBot:
         await s.commit()
 
         return str(summarized_dialog)
-
 
     def run(self):
         self.application.run_polling(allowed_updates=Update.ALL_TYPES)
@@ -251,5 +239,7 @@ class TelegramBot:
     async def summarize(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
         async with async_session() as s:
             user = await User.get_by_chat_id(tg_update.message.chat.id, s)
-            sum = await self.__summarize(user.id, s)
-            await tg_update.message.reply_text(sum, reply_to_message_id=tg_update.message.message_id)
+            sum_task = asyncio.ensure_future(self.__summarize(user.id, s))
+            await self.__send_typing_until_complete(tg_update, sum_task)
+            sum_results = await sum_task
+            await tg_update.message.reply_text(sum_results, reply_to_message_id=tg_update.message.message_id)

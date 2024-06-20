@@ -23,7 +23,7 @@ class OpenAIProvider(BaseProvider):
 
         return ai_response
 
-    async def image(self, base64_images: list, question="What’s in this image?", chat_history: list[ChatMessageSchema] = (),
+    async def image(self, base64_images: list, question, chat_history: list[ChatMessageSchema] = (),
                     system_prompt=None) -> AIResponse:
         headers = self.__prepare_headers()
         payload = self.__prepare_payload(text=question, base64_images=base64_images, chat_history=chat_history, system_prompt=system_prompt)
