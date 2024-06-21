@@ -202,9 +202,9 @@ class Manager:
 
     async def __log_message(self, telegram_user: TelegramUser, message: Message, prefix: str = 'TEXT'):
         if Settings.LOG_MESSAGES:
-            logger.info(f"{prefix} | User: {telegram_user.username} "
-                        f"Q: {message.message_text} "
-                        f"A: {message.answer} "
+            logger.info(f"Q {prefix} | User: {telegram_user.username} {message.message_text.replace('\n', ' ').replace('\r', ' ')}")
+            logger.info(f"A {prefix} | User: {telegram_user.username} "
+                        f"{message.answer.replace('\n', ' ').replace('\r', ' ')} | "
                         f"Prompt tokens: {message.prompt_tokens}, "
                         f"Completion tokens: {message.completion_tokens}, "
                         f"Total tokens: {message.total_tokens}")
