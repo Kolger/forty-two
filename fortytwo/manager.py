@@ -200,12 +200,13 @@ class Manager:
         return True
 
     async def __log_message(self, telegram_user: TelegramUser, message: Message, prefix: str = 'TEXT'):
-        logger.info(f"{prefix} | User: {telegram_user.username}\n"
-                    f"Q: {message.message_text}\n"
-                    f"A: {message.answer}\n"
-                    f"Prompt tokens: {message.prompt_tokens}, "
-                    f"Completion tokens: {message.completion_tokens}, "
-                    f"Total tokens: {message.total_tokens}")
+        if Settings.LOG_MESSAGES:
+            logger.info(f"{prefix} | User: {telegram_user.username}\n"
+                        f"Q: {message.message_text}\n"
+                        f"A: {message.answer}\n"
+                        f"Prompt tokens: {message.prompt_tokens}, "
+                        f"Completion tokens: {message.completion_tokens}, "
+                        f"Total tokens: {message.total_tokens}")
 
     async def process_summarize(self, user_id, s):
         chat_history = await self.__prepare_chat_history(user_id, s)
