@@ -140,7 +140,7 @@ class Manager:
 
     async def __prepare_chat_history(self, user_id: int, session) -> list[OpenAIChatMessage]:
         messages = await Message.get_by_user(user_id, session)
-        chat_history = list(OpenAIChatMessage)
+        chat_history = list()
 
         for message in messages:
             assistant_message: OpenAIAssistantMessage = {
