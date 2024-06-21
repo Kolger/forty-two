@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 class OpenAITextContent(TypedDict):
     type: Literal["text", "image_url"]
-    content: str
+    text: str
 
 
 class OpenAIImageContent(TypedDict):
@@ -27,7 +27,7 @@ class OpenAIAssistantMessage(TypedDict):
 
 
 class OpenAISystemMessage(TypedDict):
-    content: OpenAITextContent
+    content: str
     role: Literal["system"]
 
 
