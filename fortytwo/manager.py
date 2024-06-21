@@ -6,11 +6,12 @@ from sqlalchemy import select, update
 
 from fortytwo.database import async_session
 from fortytwo.database.models import User, Message, Picture
+from fortytwo.logger import logger
 from fortytwo.providers.base import BaseProvider
 from fortytwo.providers.openai import OpenAIProvider
+from fortytwo.providers.types import OpenAIChatMessage, OpenAIUserMessage, OpenAIAssistantMessage
 from fortytwo.settings import Settings
 from fortytwo.types import TelegramUser, TelegramMessage
-from fortytwo.logger import logger
 
 
 class Manager:
@@ -137,12 +138,12 @@ class Manager:
 
             return ret_messages
 
-    async def __prepare_chat_history(self, user_id: int, session):
+    async def __prepare_chat_history(self, user_id: int, session) -> list[OpenAIChatMessage]:
         messages = await Message.get_by_user(user_id, session)
-        chat_history = []
+        chat_history = list(OpenAIChatMessage)
 
         for message in messages:
-            assistant_message = {
+            assistant_message: OpenAIAssistantMessage = {
                 "role": "assistant",
                 "content": [
                     {
@@ -152,7 +153,7 @@ class Manager:
                 ]
             }
 
-            user_message = {
+            user_message: OpenAIUserMessage = {
                 "role": "user",
                 "content": [
                     {

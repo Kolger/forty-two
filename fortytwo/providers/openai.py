@@ -1,12 +1,11 @@
-from .base import BaseProvider
-import os
-import base64
 import json
+import os
+
 import aiohttp
-import asyncio
-import random
+
 from fortytwo.settings import Settings
-from .types import UserSchema, AssistantSchema, SystemSchema, ChatMessageSchema, AIResponse
+from .base import BaseProvider
+from .types import OpenAIHeaders, OpenAIChatMessage, OpenAIImageMessage, OpenAIPayload, AIResponse
 
 
 class OpenAIProvider(BaseProvider):
@@ -15,7 +14,7 @@ class OpenAIProvider(BaseProvider):
         self.model = Settings.OPENAI_MODEL
         self.default_system_prompt = Settings.SYSTEM_PROMPT
 
-    async def text(self, question, chat_history: list[ChatMessageSchema] = (), system_prompt=None) -> AIResponse:
+    async def text(self, question, chat_history: list[OpenAIChatMessage] = (), system_prompt=None) -> AIResponse:
         headers = self.__prepare_headers()
         payload = self.__prepare_payload(text=question, chat_history=chat_history, system_prompt=system_prompt)
 
@@ -23,7 +22,7 @@ class OpenAIProvider(BaseProvider):
 
         return ai_response
 
-    async def image(self, base64_images: list, question, chat_history: list[ChatMessageSchema] = (),
+    async def image(self, base64_images: list, question, chat_history: list[OpenAIChatMessage] = (),
                     system_prompt=None) -> AIResponse:
         headers = self.__prepare_headers()
         payload = self.__prepare_payload(text=question, base64_images=base64_images, chat_history=chat_history, system_prompt=system_prompt)
@@ -33,18 +32,19 @@ class OpenAIProvider(BaseProvider):
         return ai_response
 
     def __prepare_headers(self):
-        headers = {
+        headers: OpenAIHeaders = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY')}"
         }
 
         return headers
 
-    def __prepare_payload(self, text, base64_images=(), chat_history=(), system_prompt=None):
+    def __prepare_payload(self, text, base64_images=(), chat_history: list[OpenAIChatMessage] = (),
+                          system_prompt: str = None) -> OpenAIPayload:
         if not system_prompt:
             system_prompt = self.default_system_prompt
 
-        pictures = []
+        pictures: list[OpenAIImageMessage] = []
 
         for base64_image in base64_images:
             pictures.append({
@@ -54,7 +54,7 @@ class OpenAIProvider(BaseProvider):
                 }
             })
 
-        payload = {
+        payload: OpenAIPayload = {
             "model": self.model,
             "messages": [
                 {
@@ -78,7 +78,7 @@ class OpenAIProvider(BaseProvider):
 
         return payload
 
-    async def __make_request(self, headers, payload) -> AIResponse:
+    async def __make_request(self, headers: OpenAIHeaders, payload: OpenAIPayload) -> AIResponse:
         url = 'https://api.openai.com/v1/chat/completions'
         async with aiohttp.ClientSession() as session:
             async with session.post(url, headers=headers, data=json.dumps(payload)) as resp:
