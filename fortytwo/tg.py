@@ -9,10 +9,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 from fortytwo.database import async_session
 from fortytwo.database.models import User, Message
 from fortytwo.manager import Manager
-from fortytwo.providers import PROVIDERS
-from fortytwo.providers.base import BaseProvider
-from fortytwo.providers.openai import OpenAIProvider
-from fortytwo.providers.gemini import GeminiProvider
+from fortytwo.providers import available_providers
 from fortytwo.settings import Settings
 from fortytwo.types import TelegramUser, TelegramMessage
 
@@ -117,7 +114,7 @@ class TelegramBot:
     async def provider(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = []
 
-        for provider in PROVIDERS:
+        for provider in available_providers():
             keyboard.append([InlineKeyboardButton(provider, callback_data="set_provider_" + provider)])
         reply_markup = InlineKeyboardMarkup(keyboard)
         await self.__set_commands()

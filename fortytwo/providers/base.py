@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from .types import OpenAIChatMessage, AIResponse, UniversalChatHistory
+from .types import AIResponse, UniversalChatHistory
 
 
 class BaseProvider(ABC):
