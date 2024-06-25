@@ -5,7 +5,8 @@ import aiohttp
 
 from fortytwo.settings import Settings
 from .base import BaseProvider
-from .types import OpenAIHeaders, OpenAIChatMessage, OpenAIImageMessage, OpenAIPayload, AIResponse, OpenAIAssistantMessage, OpenAIUserMessage
+from .types import RequestHeaders,  AIResponse,  UniversalChatHistory
+from .openai_types import OpenAIChatMessage, OpenAIImageMessage, OpenAIPayload, OpenAIAssistantMessage, OpenAIUserMessage
 
 
 class OpenAIProvider(BaseProvider):
@@ -32,14 +33,14 @@ class OpenAIProvider(BaseProvider):
         return ai_response
 
     def __prepare_headers(self):
-        headers: OpenAIHeaders = {
+        headers: RequestHeaders = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY')}"
         }
 
         return headers
 
-    def __convert_chat_history(self, chat_history: list) -> list[OpenAIChatMessage]:
+    def __convert_chat_history(self, chat_history: UniversalChatHistory) -> list[OpenAIChatMessage]:
         converted_chat_history = []
 
         for message in chat_history:
@@ -75,42 +76,6 @@ class OpenAIProvider(BaseProvider):
                 }
 
                 converted_chat_history.append(assistant_message)
-
-        """for message in messages:
-                   assistant_message: OpenAIAssistantMessage = {
-                       "role": "assistant",
-                       "content": [
-                           {
-                               "type": "text",
-                               "text": message.answer or ''
-                           },
-                       ]
-                   }
-
-                   user_message: OpenAIUserMessage = {
-                       "role": "user",
-                       "content": [
-                           {
-                               "type": "text",
-                               "text": message.message_text or ''
-                           },
-                       ]
-                   }
-
-                   pictures = (await session.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
-                   for picture in pictures:
-                       user_message['content'].append(
-                           {
-                               "type": "image_url",
-                               "image_url": {
-                                   "url": f"data:image/jpeg;base64,{picture.file_base64}"
-                               }
-                           }
-                       )
-
-                   chat_history.append(user_message)
-                   chat_history.append(assistant_message)
-               """
 
         return converted_chat_history
 
@@ -153,7 +118,7 @@ class OpenAIProvider(BaseProvider):
 
         return payload
 
-    async def __make_request(self, headers: OpenAIHeaders, payload: OpenAIPayload) -> AIResponse:
+    async def __make_request(self, headers: RequestHeaders, payload: OpenAIPayload) -> AIResponse:
         url = 'https://api.openai.com/v1/chat/completions'
         async with aiohttp.ClientSession() as session:
             async with session.post(url, headers=headers, data=json.dumps(payload)) as resp:

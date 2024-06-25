@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import io
+import json
 
 from sqlalchemy import select, update
 
@@ -11,7 +12,7 @@ from fortytwo.providers import get_provider
 from fortytwo.providers.base import BaseProvider
 from fortytwo.providers.openai import OpenAIProvider
 from fortytwo.providers.gemini import GeminiProvider
-from fortytwo.providers.types import OpenAIChatMessage, OpenAIUserMessage, OpenAIAssistantMessage
+from fortytwo.providers.types import UniversalChatMessage, UniversalChatContent, UniversalChatHistory
 from fortytwo.settings import Settings
 from fortytwo.types import TelegramUser, TelegramMessage
 
@@ -153,54 +154,21 @@ class Manager:
 
             return ret_messages
 
-    async def __prepare_chat_history(self, user_id: int, session) -> list[OpenAIChatMessage]:
+    async def __prepare_chat_history(self, user_id: int, session) -> UniversalChatHistory:
         messages = await Message.get_by_user(user_id, session)
-        chat_history = list()
+        chat_history: UniversalChatHistory = list()
 
         for message in messages:
-            assistant_message ={"text": message.answer or ''}
-            user_message = {"text": message.message_text or '', 'images': []}
-            pictures = (await session.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
+            assistant_message: UniversalChatContent = {"text": message.answer or ''}
+            user_message: UniversalChatContent = {"text": message.message_text or '', 'images': []}
+            pictures: list[Picture] = (await session.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
+
             for picture in pictures:
                 user_message['images'].append(picture.file_base64)
 
-            chat_history.append({'role': 'user', 'content': user_message})
-            chat_history.append({'role': 'assistant', 'content': assistant_message})
-        """for message in messages:
-            assistant_message: OpenAIAssistantMessage = {
-                "role": "assistant",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": message.answer or ''
-                    },
-                ]
-            }
+            chat_history.append(UniversalChatMessage(role='user', content=user_message))
+            chat_history.append(UniversalChatMessage(role='assistant', content=assistant_message))
 
-            user_message: OpenAIUserMessage = {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": message.message_text or ''
-                    },
-                ]
-            }
-
-            pictures = (await session.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
-            for picture in pictures:
-                user_message['content'].append(
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{picture.file_base64}"
-                        }
-                    }
-                )
-
-            chat_history.append(user_message)
-            chat_history.append(assistant_message)
-        """
         return chat_history
 
     async def __get_or_create_user(self, telegram_user: TelegramUser, s):
@@ -245,7 +213,9 @@ class Manager:
         chat_history = await self.__prepare_chat_history(user_id, s)
         system_prompt = "Summarize this dialog (what we'e discussed before) for me. Answer USING ONLY English not another language."
 
-        summarized_dialog = await self.provider.text(question=system_prompt, system_prompt=system_prompt, chat_history=chat_history)
+        user = (await s.execute(select(User).where(User.id == user_id))).scalar()
+
+        summarized_dialog = await self.__get_provider(user).text(question=system_prompt, system_prompt=system_prompt, chat_history=chat_history)
         await Message.clear_by_user(user_id, s)
         message = Message(user_id=user_id, message_text="What we've discussed earlier?", answer=str(summarized_dialog))
         s.add(message)

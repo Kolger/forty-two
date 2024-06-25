@@ -5,7 +5,9 @@ import aiohttp
 
 from fortytwo.settings import Settings
 from .base import BaseProvider
-from .types import OpenAIHeaders, OpenAIChatMessage, OpenAIImageMessage, OpenAIPayload, AIResponse
+from .types import RequestHeaders, AIResponse, UniversalChatHistory
+
+from .gemini_types import GeminiInlineData, GeminiChatHistory, GeminiPayload, GeminiUserMessage
 
 
 class GeminiProvider(BaseProvider):
@@ -14,7 +16,7 @@ class GeminiProvider(BaseProvider):
         self.model = Settings.GEMINI_MODEL
         self.default_system_prompt = Settings.SYSTEM_PROMPT
 
-    async def text(self, question, chat_history: list[OpenAIChatMessage] = (), system_prompt=None) -> AIResponse:
+    async def text(self, question, chat_history: UniversalChatHistory = (), system_prompt=None) -> AIResponse:
         headers = self.__prepare_headers()
         payload = self.__prepare_payload(text=question, chat_history=chat_history, system_prompt=system_prompt)
 
@@ -22,7 +24,7 @@ class GeminiProvider(BaseProvider):
 
         return ai_response
 
-    async def image(self, base64_images: list, question, chat_history: list[OpenAIChatMessage] = (),
+    async def image(self, base64_images: list, question, chat_history: UniversalChatHistory = (),
                     system_prompt=None) -> AIResponse:
         headers = self.__prepare_headers()
         payload = self.__prepare_payload(text=question, base64_images=base64_images, chat_history=chat_history, system_prompt=system_prompt)
@@ -31,19 +33,19 @@ class GeminiProvider(BaseProvider):
 
         return ai_response
 
-    def __prepare_headers(self):
-        headers: OpenAIHeaders = {
+    def __prepare_headers(self) -> RequestHeaders:
+        headers: RequestHeaders = {
             "Content-Type": "application/json",
         }
 
         return headers
 
-    def __convert_chat_history(self, chat_history: list) -> list:
-        converted_chat_history = []
+    def __convert_chat_history(self, chat_history: UniversalChatHistory) -> GeminiChatHistory:
+        converted_chat_history: GeminiChatHistory = []
 
         for message in chat_history:
             if message['role'] == "user":
-                user_message = {
+                user_message: GeminiUserMessage = {
                     "role": "user",
                     "parts": [
                         {
@@ -75,24 +77,21 @@ class GeminiProvider(BaseProvider):
 
         return converted_chat_history
 
-    def __prepare_payload(self, text, base64_images=(), chat_history: list[OpenAIChatMessage] = (),
-                          system_prompt: str = None) -> OpenAIPayload:
+    def __prepare_payload(self, text: str, base64_images=(), chat_history: UniversalChatHistory = (),
+                          system_prompt: str = None) -> GeminiPayload:
         if not system_prompt:
             system_prompt = self.default_system_prompt
 
-        pictures: list[OpenAIImageMessage] = []
+        pictures: list = []
 
         chat_history = self.__convert_chat_history(chat_history)
 
         for base64_image in base64_images:
             pictures.append({
-                "inline_data": {
-                    "mime_type": "image/jpeg",
-                    "data": base64_image
-                }
+                "inline_data": GeminiInlineData(mime_type="image/jpeg", data=base64_image)
             })
 
-        payload = {
+        payload: GeminiPayload = {
             "system_instruction":
             {
                 "parts": [
@@ -118,7 +117,7 @@ class GeminiProvider(BaseProvider):
 
         return payload
 
-    async def __make_request(self, headers, payload) -> AIResponse:
+    async def __make_request(self, headers: RequestHeaders, payload: GeminiPayload) -> AIResponse:
         api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
 
         async with aiohttp.ClientSession() as session:
