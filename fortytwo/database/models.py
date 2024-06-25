@@ -16,12 +16,16 @@ class User(Base):
     chat_id = Column(Integer)
     username = Column(String(255))
     title = Column(String(255))
+    provider = Column(String(20), default=None)
 
     messages = relationship('Message', back_populates='user', cascade='all, delete-orphan')
 
     @classmethod
     async def get_by_chat_id(cls, chat_id, session):
         return (await session.execute(select(cls).where(cls.chat_id == chat_id))).scalar()
+
+    async def set_provider(self, provider, session):
+        await session.execute(update(User).where(self.id == User.id).values(provider=provider))
 
     __table_args__ = (
         UniqueConstraint('chat_id', name='uq_users_chat_id'),
@@ -40,6 +44,9 @@ class Message(Base):
     completion_tokens = Column(Integer)
     prompt_tokens = Column(Integer)
     total_tokens = Column(Integer)
+    is_error = Column(Boolean, default=False)
+
+    provider = Column(String(20), default=None)
 
     user = relationship('User', back_populates='messages')
 
@@ -54,7 +61,7 @@ class Message(Base):
     @classmethod
     async def get_by_user(cls, user_id, session):
         return (await session.execute(select(cls)
-                                      .where(and_(cls.user_id == user_id, cls.is_active == True)))).scalars().all()
+                                      .where(and_(cls.user_id == user_id, cls.is_active == True, cls.is_error == False)))).scalars().all()
 
 
 class Picture(Base):

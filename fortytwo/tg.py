@@ -1,16 +1,18 @@
 import asyncio
 
 from sqlalchemy import update
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.error import BadRequest
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler, CallbackContext
 
 from fortytwo.database import async_session
 from fortytwo.database.models import User, Message
 from fortytwo.manager import Manager
+from fortytwo.providers import PROVIDERS
 from fortytwo.providers.base import BaseProvider
 from fortytwo.providers.openai import OpenAIProvider
+from fortytwo.providers.gemini import GeminiProvider
 from fortytwo.settings import Settings
 from fortytwo.types import TelegramUser, TelegramMessage
 
@@ -20,7 +22,6 @@ class TelegramBot:
         if not token:
             token = Settings.TELEGRAM_TOKEN
         self.token = token
-        self.provider: BaseProvider = OpenAIProvider()
         self.manager = Manager()
         self.application = Application.builder().token(self.token).concurrent_updates(True).build()
 
@@ -28,7 +29,10 @@ class TelegramBot:
         self.application.add_handler(MessageHandler(filters.PHOTO, self.handle_image))
         self.application.add_handler(CommandHandler('start', self.start))
         self.application.add_handler(CommandHandler('reset', self.reset))
+        self.application.add_handler(CommandHandler('test', self.test))
+        self.application.add_handler(CommandHandler('provider', self.provider))
         self.application.add_handler(CommandHandler('summarize', self.summarize))
+        self.application.add_handler(CallbackQueryHandler(self.handle_inline_keyboard))
 
     async def handle_text(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         telegram_user = TelegramUser(id=tg_update.message.chat.id, username=tg_update.message.chat.username,
@@ -56,12 +60,16 @@ class TelegramBot:
         if messages:
             await self.__send_messages(tg_update, messages)
 
-    async def start(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def __set_commands(self):
         await self.application.bot.set_my_commands([
             ('start', 'Start the bot'),
             ('reset', 'Reset the bot'),
-            ('summarize', 'Summarize the dialog')
+            ('summarize', 'Summarize the dialog'),
+            ('provider', 'Set the AI provider')
         ])
+
+    async def start(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.__set_commands()
         await tg_update.message.reply_text('Hi!')
 
     async def reset(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -69,6 +77,53 @@ class TelegramBot:
             user = await User.get_by_chat_id(tg_update.message.chat.id, s)
             await Message.clear_by_user(user.id, s)
         await tg_update.message.reply_text('Your dialog history has been cleared.')
+
+    async def handle_inline_keyboard(self, tg_update: Update, _: CallbackContext) -> None:
+        query = tg_update.callback_query
+
+        await query.answer("Processing...")
+
+        if query.data.startswith("set_provider_"):
+            provider = query.data.split("_")[2]
+            async with async_session() as s:
+                user = await User.get_by_chat_id(query.message.chat.id, s)
+                await user.set_provider(provider, s)
+                await s.commit()
+            await query.edit_message_text(f"Your current provider is *{provider}* \n", parse_mode=ParseMode.MARKDOWN)
+            return None
+
+        if query.data == "another":
+            keyboard = [
+                [InlineKeyboardButton('Gemini', callback_data="Gemini")],
+                [InlineKeyboardButton('Antropic', callback_data="Antropic")],
+                [InlineKeyboardButton('Mistral', callback_data="Mistral")],
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_reply_markup(reply_markup)
+        else:
+            await self.application.bot.send_message(chat_id=query.message.chat.id, text=f"Sample answer from {query.data}", reply_to_message_id=query.message.message_id)
+
+        return None
+
+    async def test(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+        keyboard = [
+            [InlineKeyboardButton('Ask another AI', callback_data="another")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await tg_update.message.reply_text('Sample message', reply_markup=reply_markup)
+
+    async def provider(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
+        keyboard = []
+
+        for provider in PROVIDERS:
+            keyboard.append([InlineKeyboardButton(provider, callback_data="set_provider_" + provider)])
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await self.__set_commands()
+        async with async_session() as s:
+            user = await User.get_by_chat_id(tg_update.message.chat.id, s)
+        await tg_update.message.reply_text(f'Your current provider is *{user.provider}* \nSelect new provider', reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
 
     async def summarize(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
         async with async_session() as s:
@@ -79,12 +134,14 @@ class TelegramBot:
             await tg_update.message.reply_text(sum_results, reply_to_message_id=tg_update.message.message_id)
 
     async def __send_messages(self, tg_update: Update, messages: list[str]):
+        await self.__set_commands()
         for message in messages:
             try:
                 await tg_update.message.reply_text(message, reply_to_message_id=tg_update.message.message_id, parse_mode=ParseMode.MARKDOWN)
             except BadRequest as e:
                 # If we receive a BadRequest, it could be because the message contains a character that is not supported by Markdown.
                 # In this case, we will send the message without Markdown.
+                print("BAD REQUEST", e)
                 await tg_update.message.reply_text(message, reply_to_message_id=tg_update.message.message_id)
 
     async def __send_typing_until_complete(self, update: Update, task: asyncio.Task):

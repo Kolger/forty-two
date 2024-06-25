@@ -7,8 +7,10 @@ from sqlalchemy import select, update
 from fortytwo.database import async_session
 from fortytwo.database.models import User, Message, Picture
 from fortytwo.logger import logger
+from fortytwo.providers import get_provider
 from fortytwo.providers.base import BaseProvider
 from fortytwo.providers.openai import OpenAIProvider
+from fortytwo.providers.gemini import GeminiProvider
 from fortytwo.providers.types import OpenAIChatMessage, OpenAIUserMessage, OpenAIAssistantMessage
 from fortytwo.settings import Settings
 from fortytwo.types import TelegramUser, TelegramMessage
@@ -16,7 +18,10 @@ from fortytwo.types import TelegramUser, TelegramMessage
 
 class Manager:
     def __init__(self):
-        self.provider: BaseProvider = OpenAIProvider()
+        #self.provider: BaseProvider = OpenAIProvider()
+        #self.provider: BaseProvider = GeminiProvider()
+        #self.provider: BaseProvider = get_provider()
+        ...
 
     async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[str]:
         async with async_session() as s:
@@ -30,12 +35,16 @@ class Manager:
             s.add(message)
             await s.commit()
 
-            answer = await self.provider.text(telegram_message, chat_history=chat_history)
+            answer = await self.__get_provider(user.provider).text(telegram_message, chat_history=chat_history)
+
+            if answer.status == answer.Status.ERROR:
+                message.is_error = True
 
             message.answer = str(answer)
             message.total_tokens = answer.total_tokens
             message.completion_tokens = answer.completion_tokens
             message.prompt_tokens = answer.prompt_tokens
+            message.provider = answer.provider
 
             await s.commit()
 
@@ -121,12 +130,18 @@ class Manager:
                 else:
                     return None
 
-            answer = await self.provider.image(pictures_base64, question=question, chat_history=chat_history)
+            answer = await self.__get_provider(user.provider).image(pictures_base64, question=question, chat_history=chat_history)
+
+            if answer.status == answer.Status.ERROR:
+                message.is_error = True
 
             message.answer = str(answer)
             message.total_tokens = answer.total_tokens
             message.completion_tokens = answer.completion_tokens
             message.prompt_tokens = answer.prompt_tokens
+            message.provider = answer.provider
+
+            await s.commit()
 
             ret_messages = [str(answer), ]
 
@@ -143,6 +158,15 @@ class Manager:
         chat_history = list()
 
         for message in messages:
+            assistant_message ={"text": message.answer or ''}
+            user_message = {"text": message.message_text or '', 'images': []}
+            pictures = (await session.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
+            for picture in pictures:
+                user_message['images'].append(picture.file_base64)
+
+            chat_history.append({'role': 'user', 'content': user_message})
+            chat_history.append({'role': 'assistant', 'content': assistant_message})
+        """for message in messages:
             assistant_message: OpenAIAssistantMessage = {
                 "role": "assistant",
                 "content": [
@@ -176,7 +200,7 @@ class Manager:
 
             chat_history.append(user_message)
             chat_history.append(assistant_message)
-
+        """
         return chat_history
 
     async def __get_or_create_user(self, telegram_user: TelegramUser, s):
@@ -188,6 +212,14 @@ class Manager:
             await s.commit()
 
         return user
+
+    def __get_provider(self, user_provider: str | None) -> BaseProvider:
+        if user_provider:
+            selected_provider = user_provider
+        else:
+            selected_provider = Settings.PROVIDER
+
+        return get_provider(selected_provider)
 
     async def __check_user_access(self, telegram_user: TelegramUser):
         if not Settings.ALLOWED_USERS:
@@ -211,7 +243,7 @@ class Manager:
 
     async def process_summarize(self, user_id, s):
         chat_history = await self.__prepare_chat_history(user_id, s)
-        system_prompt = "Summarize this dialog for me. Answer USING ONLY English not another language."
+        system_prompt = "Summarize this dialog (what we'e discussed before) for me. Answer USING ONLY English not another language."
 
         summarized_dialog = await self.provider.text(question=system_prompt, system_prompt=system_prompt, chat_history=chat_history)
         await Message.clear_by_user(user_id, s)

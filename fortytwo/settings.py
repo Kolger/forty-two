@@ -4,7 +4,10 @@ load_dotenv()
 
 
 class Settings:
+    PROVIDER = os.environ.get('PROVIDER', 'OPENAI')
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-1.5-flash')
     TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
     DB_STRING = os.environ.get('DB_STRING')
     MAX_COMPLETION_TOKENS = int(os.environ.get('MAX_COMPLETION_TOKENS', 4096))
