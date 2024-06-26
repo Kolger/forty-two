@@ -65,10 +65,18 @@ class TelegramBot:
         ])
 
     async def start(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
+        tg_user = TelegramUser(id=tg_update.message.chat.id, username=tg_update.message.chat.username,
+                               title=tg_update.message.chat.title)
+        await self.manager.get_user(tg_user)
+
         await self.__set_commands()
         await tg_update.message.reply_text('Hi!')
 
     async def reset(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
+        tg_user = TelegramUser(id=tg_update.message.chat.id, username=tg_update.message.chat.username,
+                               title=tg_update.message.chat.title)
+        await self.manager.get_user(tg_user)
+
         async with async_session() as s:
             user = await User.get_by_chat_id(tg_update.message.chat.id, s)
             await Message.clear_by_user(user.id, s)
