@@ -75,6 +75,15 @@ class TelegramBot:
             await Message.clear_by_user(user.id, s)
         await tg_update.message.reply_text('Your dialog history has been cleared.')
 
+    def __prepare_another_ai_keyboard(self, message_id):
+        keyboard = []
+        for provider in available_providers():
+            keyboard.append([InlineKeyboardButton(provider, callback_data="another_" + provider + "_" + str(message_id))])
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        return reply_markup
+
     async def handle_inline_keyboard(self, tg_update: Update, _: CallbackContext) -> None:
         query = tg_update.callback_query
 
@@ -89,14 +98,19 @@ class TelegramBot:
             await query.edit_message_text(f"Your current provider is *{provider}* \n", parse_mode=ParseMode.MARKDOWN)
             return None
 
-        if query.data == "another":
-            keyboard = [
-                [InlineKeyboardButton('Gemini', callback_data="Gemini")],
-                [InlineKeyboardButton('Antropic', callback_data="Antropic")],
-                [InlineKeyboardButton('Mistral', callback_data="Mistral")],
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.edit_message_reply_markup(reply_markup)
+        if query.data.startswith("another_"):
+            keyboard = []
+            splitted_query = query.data.split("_")
+            if len(splitted_query) == 2:
+                message_id = query.data.split("_")[1]
+                for provider in available_providers():
+                    keyboard.append([InlineKeyboardButton(provider, callback_data="another_" + provider + "_" + message_id)])
+
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await query.edit_message_reply_markup(reply_markup)
+            elif len(splitted_query) == 3:
+                await self.application.bot.send_message(chat_id=query.message.chat.id, text=f"Sample answer from {query.data}",
+                                                        reply_to_message_id=query.message.message_id)
         else:
             await self.application.bot.send_message(chat_id=query.message.chat.id, text=f"Sample answer from {query.data}", reply_to_message_id=query.message.message_id)
 
@@ -130,16 +144,22 @@ class TelegramBot:
             sum_results = await sum_task
             await tg_update.message.reply_text(sum_results, reply_to_message_id=tg_update.message.message_id)
 
-    async def __send_messages(self, tg_update: Update, messages: list[str]):
+    async def __send_messages(self, tg_update: Update, messages: list[dict]):
         await self.__set_commands()
         for message in messages:
+            #reply_markup = self.__prepare_another_ai_keyboard(message.message_id)
+            keyboard = [
+                [InlineKeyboardButton('Ask another AI', callback_data="another_" + str(message['message_id']))],
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
             try:
-                await tg_update.message.reply_text(message, reply_to_message_id=tg_update.message.message_id, parse_mode=ParseMode.MARKDOWN)
+                await tg_update.message.reply_text(message['answer'], reply_to_message_id=tg_update.message.message_id,
+                                                   parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
             except BadRequest as e:
                 # If we receive a BadRequest, it could be because the message contains a character that is not supported by Markdown.
                 # In this case, we will send the message without Markdown.
                 print("BAD REQUEST", e)
-                await tg_update.message.reply_text(message, reply_to_message_id=tg_update.message.message_id)
+                await tg_update.message.reply_text(message['answer'], reply_to_message_id=tg_update.message.message_id, reply_markup=reply_markup)
 
     async def __send_typing_until_complete(self, update: Update, task: asyncio.Task):
         while not task.done():

@@ -5,7 +5,7 @@ from enum import Enum
 
 RequestHeaders = TypedDict('RequestHeaders', {
     'Content-Type': Literal["application/json"],
-    'Authorization': NotRequired[str]
+    'Authorization': NotRequired[str],
 })
 
 

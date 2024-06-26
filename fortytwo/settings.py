@@ -5,8 +5,10 @@ load_dotenv()
 
 class Settings:
     PROVIDER = os.environ.get('PROVIDER', 'OPENAI')
-    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', None)
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', None)
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', None)
+    ANTHROPIC_MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-3-5-sonnet-20240620')
     GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-1.5-flash')
     TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
     DB_STRING = os.environ.get('DB_STRING')

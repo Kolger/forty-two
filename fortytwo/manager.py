@@ -24,10 +24,10 @@ class Manager:
         #self.provider: BaseProvider = get_provider()
         ...
 
-    async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[str]:
+    async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[dict]:
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
-                return ["You don't have access to a bot. Please contact the administrator.", ]
+                return [dict(answer="You don't have access to a bot. Please contact the administrator.", message_id=-1), ]
             user = await self.__get_or_create_user(telegram_user, s)
 
             chat_history = await self.__prepare_chat_history(user.id, s)
@@ -51,15 +51,15 @@ class Manager:
 
             await self.__log_message(telegram_user, message, 'TEXT')
 
-            ret_messages = [str(answer), ]
+            ret_messages = [dict(answer=str(answer), message_id=message.id), ]
 
             if answer.total_tokens > Settings.MAX_TOTAL_TOKENS:
                 sum_results = await self.process_summarize(user.id, s)
-                ret_messages.append(f'*Your dialog was summorized:* \n\n{sum_results}')
+                ret_messages.append(dict(answer=f'*Your dialog was summorized:* \n\n{sum_results}', message_id=-1))
 
             return ret_messages
 
-    async def process_images(self, telegram_user: TelegramUser, telegram_message: TelegramMessage) -> list[str] | None:
+    async def process_images(self, telegram_user: TelegramUser, telegram_message: TelegramMessage) -> list[dict] | None:
         mm = io.BytesIO()
         await telegram_message.file.download_to_memory(out=mm)
         mm.seek(0)
@@ -67,7 +67,7 @@ class Manager:
 
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
-                return ["You don't have access to a bot. Please contact the administrator.", ]
+                return [dict(answer="You don't have access to a bot. Please contact the administrator.", message_id=-1), ]
             user = await self.__get_or_create_user(telegram_user, s)
 
             pictures_base64 = []
@@ -144,13 +144,13 @@ class Manager:
 
             await s.commit()
 
-            ret_messages = [str(answer), ]
+            ret_messages = [dict(answer=str(answer), message_id=message.id), ]
 
             await self.__log_message(telegram_user, message, 'IMAGE')
 
             if answer.total_tokens > Settings.MAX_TOTAL_TOKENS:
                 sum_results = await self.process_summarize(user.id, s)
-                ret_messages.append(f'*Your dialog was summorized:* \n\n{sum_results}')
+                ret_messages.append(dict(answer=f'*Your dialog was summorized:* \n\n{sum_results}', message_id=-1))
 
             return ret_messages
 
