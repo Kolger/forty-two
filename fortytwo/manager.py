@@ -198,6 +198,15 @@ class Manager:
 
         return user
 
+    async def get_user(self, telegram_user: TelegramUser):
+        async with async_session() as s:
+            user = await self.__get_or_create_user(telegram_user, s)
+
+            return dict(
+                user_id=user.id,
+                provider=user.provider or Settings.PROVIDER
+            )
+
     def __get_provider(self, user_provider: str | None) -> BaseProvider:
         if user_provider:
             selected_provider = user_provider

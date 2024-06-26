@@ -132,9 +132,11 @@ class TelegramBot:
             keyboard.append([InlineKeyboardButton(provider, callback_data="set_provider_" + provider)])
         reply_markup = InlineKeyboardMarkup(keyboard)
         await self.__set_commands()
-        async with async_session() as s:
-            user = await User.get_by_chat_id(tg_update.message.chat.id, s)
-        await tg_update.message.reply_text(f'Your current provider is *{user.provider}* \nSelect new provider', reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
+        #user = await User.get_by_chat_id(tg_update.message.chat.id, s)
+        tg_user = TelegramUser(id=tg_update.message.chat.id, username=tg_update.message.chat.username,
+                                                title=tg_update.message.chat.title)
+        user_data = await self.manager.get_user(tg_user)
+        await tg_update.message.reply_text(f'Your current provider is *{user_data['provider']}* \nSelect new provider', reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
 
     async def summarize(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
         async with async_session() as s:
