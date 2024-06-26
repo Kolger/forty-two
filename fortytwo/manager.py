@@ -4,6 +4,7 @@ import io
 import json
 
 from sqlalchemy import select, update
+from sqlalchemy.orm import selectinload
 
 from fortytwo.database import async_session
 from fortytwo.database.models import User, Message, Picture
@@ -12,9 +13,9 @@ from fortytwo.providers import get_provider
 from fortytwo.providers.base import BaseProvider
 from fortytwo.providers.openai import OpenAIProvider
 from fortytwo.providers.gemini import GeminiProvider
-from fortytwo.providers.types import UniversalChatMessage, UniversalChatContent, UniversalChatHistory
+from fortytwo.providers.types import UniversalChatMessage, UniversalChatContent, UniversalChatHistory, AIResponse
 from fortytwo.settings import Settings
-from fortytwo.types import TelegramUser, TelegramMessage
+from fortytwo.types import TelegramUser, TelegramMessage, AIAnswer
 
 
 class Manager:
@@ -36,10 +37,10 @@ class Manager:
             message = (await s.execute(select(Message).where(message_id == Message.id))).scalar()
             return message.provider
 
-    async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[dict]:
+    async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[AIAnswer]:
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
-                return [dict(answer="You don't have access to a bot. Please contact the administrator.", message_id=-1), ]
+                return [AIAnswer(answer="You don't have access to a bot. Please contact the administrator.", message_id=-1), ]
             user = await self.__get_or_create_user(telegram_user, s)
 
             chat_history = await self.__prepare_chat_history(user.id, s)
@@ -63,7 +64,7 @@ class Manager:
 
             await self.__log_message(telegram_user, message, 'TEXT')
 
-            ret_messages = [dict(answer=str(answer), message_id=message.id), ]
+            ret_messages = [AIAnswer(answer=str(answer), message_id=message.id), ]
 
             if answer.total_tokens > Settings.MAX_TOTAL_TOKENS:
                 sum_results = await self.process_summarize(user.id, s)
@@ -71,7 +72,7 @@ class Manager:
 
             return ret_messages
 
-    async def process_images(self, telegram_user: TelegramUser, telegram_message: TelegramMessage) -> list[dict] | None:
+    async def process_images(self, telegram_user: TelegramUser, telegram_message: TelegramMessage) -> list[AIAnswer] | None:
         mm = io.BytesIO()
         await telegram_message.file.download_to_memory(out=mm)
         mm.seek(0)
@@ -79,7 +80,7 @@ class Manager:
 
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
-                return [dict(answer="You don't have access to a bot. Please contact the administrator.", message_id=-1), ]
+                return [AIAnswer(answer="You don't have access to a bot. Please contact the administrator.", message_id=-1), ]
             user = await self.__get_or_create_user(telegram_user, s)
 
             pictures_base64 = []
@@ -156,7 +157,7 @@ class Manager:
 
             await s.commit()
 
-            ret_messages = [dict(answer=str(answer), message_id=message.id), ]
+            ret_messages = [AIAnswer(answer=str(answer), message_id=message.id), ]
 
             await self.__log_message(telegram_user, message, 'IMAGE')
 
@@ -239,11 +240,11 @@ class Manager:
 
         return str(summarized_dialog)
 
-    async def ask_another_provider(self, message_id: int, provider_name: str):
+    async def ask_another_provider(self, message_id: int, provider_name: str) -> AIAnswer:
         provider = get_provider(provider_name)
 
         async with async_session() as s:
-            message = (await s.execute(select(Message).where(message_id == Message.id))).scalar()
+            message = await s.get(Message, message_id, options=[selectinload(Message.user)])
             pictures: list[Picture] = (await s.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
             chat_history = await self.__prepare_chat_history(user_id=message.user_id, session=s, until_message_id=message_id)
             print(chat_history)
@@ -253,4 +254,21 @@ class Manager:
                 answer = await provider.image(base64_images=pictures_base64, question=message.message_text, chat_history=chat_history)
             else:
                 answer = await provider.text(message.message_text, chat_history=chat_history)
-            return dict(answer=str(answer), message_id=message_id)
+
+            new_message = Message(
+                user_id=message.user.id,
+                message_text=message.message_text,
+                parent_message_id=message_id,
+                answer=str(answer),
+                provider=provider_name,
+                is_ask_another_ai=True,
+                completion_tokens=answer.completion_tokens,
+                prompt_tokens=answer.prompt_tokens,
+                total_tokens=answer.total_tokens)
+
+            s.add(new_message)
+            await s.commit()
+            await self.__log_message(TelegramUser(id=message.user.chat_id, username=message.user.username, title=message.user.title),
+                                     new_message, f'ASK ANOTHER ({provider_name})')
+
+            return AIAnswer(answer=str(answer), message_id=message_id)

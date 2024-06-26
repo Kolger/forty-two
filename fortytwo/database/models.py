@@ -38,6 +38,7 @@ class Message(Base):
     id = Column(Integer, primary_key=True)
     date = Column(DateTime(timezone=True), default=func.now())
     user_id = Column(ForeignKey('users.id', ondelete='CASCADE', name='fk_user_id'))
+    parent_message_id = Column(ForeignKey('messages.id', ondelete='CASCADE', name='fk_parent_message_id'))
     message_text = Column(Text)
     answer = Column(Text)
     is_active = Column(Boolean, default=True)
@@ -45,6 +46,7 @@ class Message(Base):
     prompt_tokens = Column(Integer)
     total_tokens = Column(Integer)
     is_error = Column(Boolean, default=False)
+    is_ask_another_ai = Column(Boolean, default=False)
 
     provider = Column(String(20), default=None)
 
@@ -60,13 +62,20 @@ class Message(Base):
     # get by user
     @classmethod
     async def get_by_user(cls, user_id, session):
-        return (await session.execute(select(cls)
-                                      .where(and_(cls.user_id == user_id, cls.is_active == True, cls.is_error == False)))).scalars().all()
+        return ((await session.execute(select(cls)
+                                      .where(and_(cls.user_id == user_id,
+                                                  cls.is_active == True,
+                                                  cls.is_error == False,
+                                                  cls.is_ask_another_ai == False)))).scalars().all())
 
     @classmethod
     async def get_by_user_until_id(cls, user_id, session, until_id):
         return (await session.execute(select(cls)
-                                      .where(and_(cls.user_id == user_id, cls.is_active == True, cls.is_error == False, cls.id < until_id)))).scalars().all()
+                                      .where(and_(cls.user_id == user_id,
+                                                  cls.is_active == True,
+                                                  cls.is_error == False,
+                                                  cls.is_ask_another_ai == False,
+                                                  cls.id < until_id)))).scalars().all()
 
 
 class Picture(Base):
@@ -81,7 +90,7 @@ class Picture(Base):
     @classmethod
     async def count_by_media_group_id(cls, media_group_id: int, session):
         pictures_count = await session.scalar(
-            select(func.count(Picture.id)).where(cls.media_group_id == media_group_id)
+            select(func.count(Picture.id)).where(media_group_id == cls.media_group_id)
         )
 
         return pictures_count

@@ -11,7 +11,7 @@ from fortytwo.database.models import User, Message
 from fortytwo.manager import Manager
 from fortytwo.providers import available_providers
 from fortytwo.settings import Settings
-from fortytwo.types import TelegramUser, TelegramMessage
+from fortytwo.types import TelegramUser, TelegramMessage, AIAnswer
 
 
 class TelegramBot:
@@ -35,7 +35,7 @@ class TelegramBot:
                                      title=tg_update.message.chat.title)
 
         process_text_task = asyncio.ensure_future(self.manager.process_text(telegram_user, tg_update.message.text))
-        await self.__send_typing_until_complete(tg_update, process_text_task)
+        await self.__send_typing_until_complete(tg_update.message.chat.id, process_text_task)
 
         messages = await process_text_task
 
@@ -49,7 +49,7 @@ class TelegramBot:
                                      title=tg_update.message.chat.title)
 
         process_image_task = asyncio.ensure_future(self.manager.process_images(telegram_user, telegram_message))
-        await self.__send_typing_until_complete(tg_update, process_image_task)
+        await self.__send_typing_until_complete(tg_update.message.chat.id, process_image_task)
 
         messages = await process_image_task
 
@@ -112,18 +112,11 @@ class TelegramBot:
                 keyboard = self.__get_inline_keyboard_ask_another_ai(message_id)
                 await query.edit_message_reply_markup(keyboard)
                 ask_another_provider_task = asyncio.ensure_future(self.manager.ask_another_provider(message_id, provider_name))
-                while not ask_another_provider_task.done():
-                    await self.application.bot.send_chat_action(query.message.chat.id, 'typing')
-                    await asyncio.sleep(2)
+                await self.__send_typing_until_complete(query.message.chat.id, ask_another_provider_task)
                 answer = await ask_another_provider_task
-                answer_text = f"Answer from *{provider_name}*:\n\n{answer['answer']}"
+                answer_text = f"Answer from *{provider_name}*:\n\n{answer.answer}"
 
-                try:
-                    await self.application.bot.send_message(chat_id=query.message.chat.id, text=answer_text,
-                                                        reply_to_message_id=query.message.message_id, parse_mode=ParseMode.MARKDOWN)
-                except BadRequest as e:
-                    await self.application.bot.send_message(chat_id=query.message.chat.id, text=answer_text,
-                                                            reply_to_message_id=query.message.message_id)
+                await self.__send_message(query.message.chat.id, answer_text, query.message.message_id)
 
         return None
 
@@ -147,26 +140,31 @@ class TelegramBot:
         async with async_session() as s:
             user = await User.get_by_chat_id(tg_update.message.chat.id, s)
             sum_task = asyncio.ensure_future(self.manager.process_summarize(user.id, s))
-            await self.__send_typing_until_complete(tg_update, sum_task)
+            await self.__send_typing_until_complete(tg_update.message.chat.id, sum_task)
             sum_results = await sum_task
             await tg_update.message.reply_text(sum_results, reply_to_message_id=tg_update.message.message_id)
 
-    async def __send_messages(self, tg_update: Update, messages: list[dict]):
+    async def __send_message(self, chat_id: int, message: str, reply_to: int = None, reply_markup: InlineKeyboardMarkup = None):
         await self.__set_commands()
-        for message in messages:
-            reply_markup = self.__get_inline_keyboard_ask_another_ai(message['message_id'])
-            try:
-                await tg_update.message.reply_text(message['answer'], reply_to_message_id=tg_update.message.message_id,
-                                                   parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
-            except BadRequest as e:
-                # If we receive a BadRequest, it could be because the message contains a character that is not supported by Markdown.
-                # In this case, we will send the message without Markdown.
-                print("BAD REQUEST", e)
-                await tg_update.message.reply_text(message['answer'], reply_to_message_id=tg_update.message.message_id, reply_markup=reply_markup)
+        try:
+            await self.application.bot.send_message(chat_id=chat_id, text=message,
+                                                    reply_to_message_id=reply_to, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
+        except BadRequest as e:
+            # If we receive a BadRequest, it could be because the message contains a character that is not supported by Markdown.
+            # In this case, we will send the message without Markdown.
+            print("BAD REQUEST", e)
+            await self.application.bot.send_message(chat_id=chat_id, text=message, reply_to_message_id=reply_to, reply_markup=reply_markup)
 
-    async def __send_typing_until_complete(self, update: Update, task: asyncio.Task):
+    async def __send_messages(self, tg_update: Update, messages: list[AIAnswer]):
+        for message in messages:
+            reply_markup = None
+            if message.message_id > 0:
+                reply_markup = self.__get_inline_keyboard_ask_another_ai(message.message_id)
+            await self.__send_message(tg_update.message.chat.id, message.answer, tg_update.message.message_id, reply_markup=reply_markup)
+
+    async def __send_typing_until_complete(self, chat_id: int, task: asyncio.Task):
         while not task.done():
-            await update.message.reply_chat_action('typing')
+            await self.application.bot.send_chat_action(chat_id, 'typing')
             await asyncio.sleep(2)
 
     def run(self):

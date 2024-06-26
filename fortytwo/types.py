@@ -14,3 +14,9 @@ class TelegramMessage:
     text: str
     file: File = None
     media_group_id: str = None
+
+
+@dataclass
+class AIAnswer:
+    answer: str
+    message_id: int
