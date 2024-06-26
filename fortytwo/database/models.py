@@ -63,6 +63,11 @@ class Message(Base):
         return (await session.execute(select(cls)
                                       .where(and_(cls.user_id == user_id, cls.is_active == True, cls.is_error == False)))).scalars().all()
 
+    @classmethod
+    async def get_by_user_until_id(cls, user_id, session, until_id):
+        return (await session.execute(select(cls)
+                                      .where(and_(cls.user_id == user_id, cls.is_active == True, cls.is_error == False, cls.id < until_id)))).scalars().all()
+
 
 class Picture(Base):
     __tablename__ = 'pictures'

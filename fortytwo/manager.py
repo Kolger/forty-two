@@ -24,6 +24,18 @@ class Manager:
         #self.provider: BaseProvider = get_provider()
         ...
 
+    async def get_message_provider(self, message_id: int):
+        """
+        Get provider name for a message
+        This method is used in Telegram class for inline buttons
+
+        :param message_id: Message ID
+        """
+
+        async with async_session() as s:
+            message = (await s.execute(select(Message).where(message_id == Message.id))).scalar()
+            return message.provider
+
     async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[dict]:
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
@@ -154,8 +166,12 @@ class Manager:
 
             return ret_messages
 
-    async def __prepare_chat_history(self, user_id: int, session) -> UniversalChatHistory:
-        messages = await Message.get_by_user(user_id, session)
+    async def __prepare_chat_history(self, user_id: int, session, until_message_id: int = None) -> UniversalChatHistory:
+        if until_message_id:
+            messages = await Message.get_by_user_until_id(user_id, session, until_message_id)
+        else:
+            messages = await Message.get_by_user(user_id, session)
+
         chat_history: UniversalChatHistory = list()
 
         for message in messages:
@@ -222,3 +238,19 @@ class Manager:
         await s.commit()
 
         return str(summarized_dialog)
+
+    async def ask_another_provider(self, message_id: int, provider_name: str):
+        provider = get_provider(provider_name)
+
+        async with async_session() as s:
+            message = (await s.execute(select(Message).where(message_id == Message.id))).scalar()
+            pictures: list[Picture] = (await s.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
+            chat_history = await self.__prepare_chat_history(user_id=message.user_id, session=s, until_message_id=message_id)
+            print(chat_history)
+
+            if len(pictures) > 0:
+                pictures_base64 = [picture.file_base64 for picture in pictures]
+                answer = await provider.image(base64_images=pictures_base64, question=message.message_text, chat_history=chat_history)
+            else:
+                answer = await provider.text(message.message_text, chat_history=chat_history)
+            return dict(answer=str(answer), message_id=message_id)
