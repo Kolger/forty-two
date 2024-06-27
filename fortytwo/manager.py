@@ -256,7 +256,6 @@ class Manager:
             message = await s.get(Message, message_id, options=[selectinload(Message.user)])
             pictures: list[Picture] = (await s.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
             chat_history = await self.__prepare_chat_history(user_id=message.user_id, session=s, until_message_id=message_id)
-            print(chat_history)
 
             if len(pictures) > 0:
                 pictures_base64 = [picture.file_base64 for picture in pictures]

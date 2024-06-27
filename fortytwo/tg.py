@@ -162,7 +162,7 @@ class TelegramBot:
         except BadRequest as e:
             # If we receive a BadRequest, it could be because the message contains a character that is not supported by Markdown.
             # In this case, we will send the message without Markdown.
-            print("BAD REQUEST", e)
+            #print("BAD REQUEST", e)
             await self.application.bot.send_message(chat_id=chat_id, text=message, reply_to_message_id=reply_to, reply_markup=reply_markup)
 
     async def __send_messages(self, tg_update: Update, messages: list[AIAnswer]):
@@ -173,6 +173,13 @@ class TelegramBot:
             await self.__send_message(tg_update.message.chat.id, message.answer, tg_update.message.message_id, reply_markup=reply_markup)
 
     async def __send_typing_until_complete(self, chat_id: int, task: asyncio.Task):
+        try:
+            await asyncio.wait_for(self.__send_typing_until_complete_infinite(chat_id, task), timeout=60)
+        except asyncio.TimeoutError:
+            task.cancel()
+            await self.application.bot.send_message(chat_id, "The operation took too long and was canceled.")
+
+    async def __send_typing_until_complete_infinite(self, chat_id: int, task: asyncio.Task):
         while not task.done():
             await self.application.bot.send_chat_action(chat_id, 'typing')
             await asyncio.sleep(2)

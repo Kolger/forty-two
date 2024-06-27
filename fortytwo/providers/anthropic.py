@@ -121,11 +121,10 @@ class AnthropicProvider(BaseProvider):
     async def __make_request(self, headers: AnthropicRequestHeaders, payload: dict) -> AIResponse:
         api_url = "https://api.anthropic.com/v1/messages"
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
             async with session.post(api_url, headers=headers, json=payload) as response:
                 response_data = await response.json()
-                print(response_data)
-                #return None
+
                 return AIResponse(
                     status=AIResponse.Status.OK,
                     content=response_data['content'][0]['text'],

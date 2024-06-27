@@ -120,7 +120,7 @@ class GeminiProvider(BaseProvider):
     async def __make_request(self, headers: RequestHeaders, payload: GeminiPayload) -> AIResponse:
         api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
             async with session.post(api_url, headers=headers, data=json.dumps(payload)) as response:
                 response_json = await response.json()
 

@@ -120,7 +120,7 @@ class OpenAIProvider(BaseProvider):
 
     async def __make_request(self, headers: RequestHeaders, payload: OpenAIPayload) -> AIResponse:
         url = 'https://api.openai.com/v1/chat/completions'
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
             async with session.post(url, headers=headers, data=json.dumps(payload)) as resp:
                 response = await resp.json()
 
