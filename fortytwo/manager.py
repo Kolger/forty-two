@@ -88,7 +88,7 @@ class Manager:
             chat_history = []
 
             if not telegram_message.media_group_id:
-                question = telegram_message.text or "What is on the image?"
+                question = telegram_message.text or ""
                 chat_history = await self.__prepare_chat_history(user.id, s)
                 message = Message(user_id=user.id, message_text=question)
                 s.add(message)
@@ -129,7 +129,7 @@ class Manager:
                             question = picture.caption
 
                     if question is None:
-                        question = "What is on the images?"
+                        question = ""
 
                     message = Message(user_id=user.id, message_text=question)
                     s.add(message)

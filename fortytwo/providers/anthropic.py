@@ -100,6 +100,10 @@ class AnthropicProvider(BaseProvider):
                 }
             })
 
+        if len(base64_images) > 0 and (text is None or text == ''):
+            # Anthropic requires a text prompt when processing images
+            text = "Process the image(s)"
+
         payload = {
             "model": self.model,
             "system": system_prompt or self.default_system_prompt,
@@ -124,12 +128,21 @@ class AnthropicProvider(BaseProvider):
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
             async with session.post(api_url, headers=headers, json=payload) as response:
                 response_data = await response.json()
-
-                return AIResponse(
-                    status=AIResponse.Status.OK,
-                    content=response_data['content'][0]['text'],
-                    total_tokens=response_data['usage']['input_tokens'] + response_data['usage']['output_tokens'],
-                    completion_tokens=response_data['usage']['output_tokens'],
-                    prompt_tokens=response_data['usage']['input_tokens'],
-                    provider='ANTHROPIC'
-                )
+                try:
+                    return AIResponse(
+                        status=AIResponse.Status.OK,
+                        content=response_data['content'][0]['text'],
+                        total_tokens=response_data['usage']['input_tokens'] + response_data['usage']['output_tokens'],
+                        completion_tokens=response_data['usage']['output_tokens'],
+                        prompt_tokens=response_data['usage']['input_tokens'],
+                        provider='ANTHROPIC'
+                    )
+                except KeyError as e:
+                    return AIResponse(
+                        status=AIResponse.Status.ERROR,
+                        content=f"Failed to make request to Anthropic API. Response: {response_data}",
+                        completion_tokens=0,
+                        prompt_tokens=0,
+                        total_tokens=0,
+                        provider='ANTHROPIC'
+                    )
