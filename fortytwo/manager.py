@@ -237,11 +237,11 @@ class Manager:
 
     async def process_summarize(self, user_id, s):
         chat_history = await self.__prepare_chat_history(user_id, s)
-        system_prompt = "Summarize this dialog (what we'e discussed before) for me. Answer USING ONLY English not another language."
+        system_prompt = "Summarize this dialog (what we'e discussed before) for me. Answer (this time) USING ONLY English not another language."
 
         user = (await s.execute(select(User).where(User.id == user_id))).scalar()
 
-        summarized_dialog = await self.__get_provider(user).text(question=system_prompt, system_prompt=system_prompt, chat_history=chat_history)
+        summarized_dialog = await self.__get_provider(user.provider).text(question=system_prompt, system_prompt=system_prompt, chat_history=chat_history)
         await Message.clear_by_user(user_id, s)
         message = Message(user_id=user_id, message_text="What we've discussed earlier?", answer=str(summarized_dialog))
         s.add(message)

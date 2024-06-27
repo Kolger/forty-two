@@ -46,12 +46,18 @@ class AnthropicProvider(BaseProvider):
 
         for message in chat_history:
             if message['role'] == "user":
+                text = message['content']['text']
+
+                if len(message['content']['images']) > 0 and (text is None or text == ''):
+                    # Anthropic requires a text prompt when processing images
+                    text = "Process the image(s)"
+
                 user_message = {
                     "role": "user",
                     "content": [
                         {
                             "type": "text",
-                            "text": message['content']['text']
+                            "text": text
                         }
                     ]
                 }
@@ -89,7 +95,7 @@ class AnthropicProvider(BaseProvider):
         chat_history = self.__convert_chat_history(chat_history)
 
         pictures: list[dict] = []
-
+        print(chat_history)
         for base64_image in base64_images:
             pictures.append({
                 "type": "image",

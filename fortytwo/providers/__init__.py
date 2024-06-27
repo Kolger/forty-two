@@ -16,7 +16,7 @@ def get_provider(provider_name: str = None) -> BaseProvider:
         provider_name = Settings.PROVIDER
 
     if provider_name not in PROVIDERS:
-        raise ValueError(f"Invalid provider: {Settings.PROVIDER}")
+        raise ValueError(f"Invalid provider: {provider_name}")
 
     return PROVIDERS[provider_name]()
 
