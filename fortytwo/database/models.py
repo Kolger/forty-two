@@ -77,6 +77,15 @@ class Message(Base):
                                                   cls.is_ask_another_ai == False,
                                                   cls.id < until_id)))).scalars().all()
 
+    @classmethod
+    async def get_last_message_by_user(cls, user_id, session):
+        return (await session.execute(select(cls).where(
+            user_id == cls.user_id,
+            True == cls.is_active,
+            False == cls.is_error,
+            False == cls.is_ask_another_ai
+        ).order_by(cls.id.desc()).limit(1))).scalar()
+
 
 class Picture(Base):
     __tablename__ = 'pictures'

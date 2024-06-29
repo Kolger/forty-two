@@ -18,3 +18,4 @@ class Settings:
     OPENAI_MODEL = os.environ.get('OPENAI_MODEL', 'gpt-4o')
     ALLOWED_USERS = os.environ.get('ALLOWED_USERS', None)
     LOG_MESSAGES = os.environ.get('LOG_MESSAGES', False)
+    HISTORY_EXPIRATION = int(os.environ.get('HISTORY_EXPIRATION', 30))

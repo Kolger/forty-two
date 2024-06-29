@@ -16,6 +16,7 @@ from fortytwo.providers.gemini import GeminiProvider
 from fortytwo.providers.types import UniversalChatMessage, UniversalChatContent, UniversalChatHistory, AIResponse
 from fortytwo.settings import Settings
 from fortytwo.types import TelegramUser, TelegramMessage, AIAnswer
+from datetime import datetime, timedelta, timezone
 
 
 class Manager:
@@ -37,11 +38,27 @@ class Manager:
             message = (await s.execute(select(Message).where(message_id == Message.id))).scalar()
             return message.provider
 
+    async def __check_is_history_expired(self, user_id: int, session):
+        last_message = await Message.get_last_message_by_user(user_id, session)
+
+        if last_message:
+            date_to_check = datetime.now(timezone.utc) - timedelta(minutes=Settings.HISTORY_EXPIRATION)
+            if last_message.date_created.replace(tzinfo=None) < date_to_check.replace(tzinfo=None):
+                await Message.clear_by_user(user_id, session)
+                return True
+            else:
+                return False
+
     async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[AIAnswer]:
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
                 return [AIAnswer(answer="You don't have access to a bot. Please contact the administrator.", message_id=-1), ]
             user = await self.__get_or_create_user(telegram_user, s)
+
+            extra_messages = []
+
+            if await self.__check_is_history_expired(user.id, s):
+                extra_messages = [AIAnswer(answer="*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because last message was more than 30 minutes ago.", message_id=-1), ]
 
             chat_history = await self.__prepare_chat_history(user.id, s)
 
@@ -64,7 +81,7 @@ class Manager:
 
             await self.__log_message(telegram_user, message, 'TEXT')
 
-            ret_messages = [AIAnswer(answer=str(answer), message_id=message.id), ]
+            ret_messages = [*extra_messages, AIAnswer(answer=str(answer), message_id=message.id), ]
 
             if answer.total_tokens > Settings.MAX_TOTAL_TOKENS:
                 sum_results = await self.process_summarize(user.id, s)
@@ -86,8 +103,14 @@ class Manager:
             pictures_base64 = []
             question = None
             chat_history = []
+            extra_messages = []
 
             if not telegram_message.media_group_id:
+                if await self.__check_is_history_expired(user.id, s):
+                    extra_messages = [AIAnswer(
+                        answer="*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because last message was more than 30 minutes ago.",
+                        message_id=-1), ]
+
                 question = telegram_message.text or ""
                 chat_history = await self.__prepare_chat_history(user.id, s)
                 message = Message(user_id=user.id, message_text=question)
@@ -119,6 +142,11 @@ class Manager:
                 pictures_count_after = await Picture.count_by_media_group_id(int(telegram_message.media_group_id), s)
 
                 if pictures_count_before == pictures_count_after:
+                    if await self.__check_is_history_expired(user.id, s):
+                        extra_messages = [AIAnswer(
+                            answer="*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because last message was more than 30 minutes ago.",
+                            message_id=-1), ]
+
                     # it was the latest image, so send to AI
                     pictures = (await s.execute(select(Picture).where(int(telegram_message.media_group_id) == Picture.media_group_id))).scalars().all()
                     chat_history = await self.__prepare_chat_history(user.id, s)
@@ -157,7 +185,7 @@ class Manager:
 
             await s.commit()
 
-            ret_messages = [AIAnswer(answer=str(answer), message_id=message.id), ]
+            ret_messages = [*extra_messages, AIAnswer(answer=str(answer), message_id=message.id), ]
 
             await self.__log_message(telegram_user, message, 'IMAGE')
 
