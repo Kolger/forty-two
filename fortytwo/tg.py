@@ -156,13 +156,28 @@ class TelegramBot:
 
     async def __send_message(self, chat_id: int, message: str, reply_to: int = None, reply_markup: InlineKeyboardMarkup = None):
         await self.__set_commands()
+        if len(message) < constants.MessageLimit.MAX_TEXT_LENGTH:
+            await self.__send_message_raw(chat_id, message, reply_to, reply_markup)
+        else:
+            # message longer than limit allowed by telegram for 1 message
+            # in this case we split answer from AI to multiple messages
+            chunks = [message[i:i + constants.MessageLimit.MAX_TEXT_LENGTH] for i in
+                      range(0, len(message), constants.MessageLimit.MAX_TEXT_LENGTH)]
+
+            for i, chunk in enumerate(chunks):
+                if i == len(chunks) - 1:
+                    # last message in chunks, only for last message add reply_markup
+                    await self.__send_message_raw(chat_id, chunk, reply_to, reply_markup)
+                else:
+                    await self.__send_message_raw(chat_id, chunk, reply_to)
+
+    async def __send_message_raw(self, chat_id: int, message: str, reply_to: int = None, reply_markup: InlineKeyboardMarkup = None):
         try:
             await self.application.bot.send_message(chat_id=chat_id, text=message,
                                                     reply_to_message_id=reply_to, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
         except BadRequest as e:
             # If we receive a BadRequest, it could be because the message contains a character that is not supported by Markdown.
             # In this case, we will send the message without Markdown.
-            #print("BAD REQUEST", e)
             await self.application.bot.send_message(chat_id=chat_id, text=message, reply_to_message_id=reply_to, reply_markup=reply_markup)
 
     async def __send_messages(self, tg_update: Update, messages: list[AIAnswer]):
@@ -171,20 +186,7 @@ class TelegramBot:
             if message.message_id > 0:
                 reply_markup = self.__get_inline_keyboard_ask_another_ai(message.message_id)
 
-            if len(message.answer) < constants.MessageLimit.MAX_TEXT_LENGTH:
-                await self.__send_message(tg_update.message.chat.id, message.answer, tg_update.message.message_id, reply_markup=reply_markup)
-            else:
-                # message longer than limit allowed by telegram for 1 message
-                # in this case we split answer from AI to multiple messages
-                chunks = [message.answer[i:i + constants.MessageLimit.MAX_TEXT_LENGTH] for i in
-                          range(0, len(message.answer), constants.MessageLimit.MAX_TEXT_LENGTH)]
-
-                for i, chunk in enumerate(chunks):
-                    if i == len(chunks) - 1:
-                        # last message in chunks, only for last message add reply_markup
-                        await self.__send_message(tg_update.message.chat.id, chunk, tg_update.message.message_id, reply_markup=reply_markup)
-                    else:
-                        await self.__send_message(tg_update.message.chat.id, chunk, tg_update.message.message_id)
+            await self.__send_message(tg_update.message.chat.id, message.answer, tg_update.message.message_id, reply_markup=reply_markup)
 
     async def __send_typing_until_complete(self, chat_id: int, task: asyncio.Task):
         try:
