@@ -134,7 +134,10 @@ class TelegramBot:
         return None
 
     def __get_inline_keyboard_ask_another_ai(self, message_id: int) -> InlineKeyboardMarkup:
-        keyboard = ([InlineKeyboardButton(_('Ask another AI'), callback_data=f"another_{message_id}")], )
+        keyboard = []
+
+        if len(available_providers()) > 1:
+            keyboard = ([InlineKeyboardButton(_('Ask another AI'), callback_data=f"another_{message_id}")], )
 
         return InlineKeyboardMarkup(keyboard)
 
