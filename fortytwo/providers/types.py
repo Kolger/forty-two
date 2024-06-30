@@ -1,60 +1,40 @@
-from typing import Literal, Required, TypedDict, Union
+from typing import Literal, Required, TypedDict, Union, NotRequired, List
 from dataclasses import dataclass
+from enum import Enum
 
 
-class OpenAITextContent(TypedDict):
-    type: Literal["text", "image_url"]
-    text: str
-
-
-class OpenAIImageContent(TypedDict):
-    url: str
-
-
-class OpenAIImageMessage(TypedDict):
-    type: Literal["image_url"]
-    image_url: OpenAIImageContent
-
-
-class OpenAIUserMessage(TypedDict):
-    content: list[OpenAITextContent | OpenAIImageMessage]
-    role: Literal["user"]
-
-
-class OpenAIAssistantMessage(TypedDict):
-    content: list[OpenAITextContent]
-    role: Literal["assistant"]
-
-
-class OpenAISystemMessage(TypedDict):
-    content: str
-    role: Literal["system"]
-
-
-OpenAIChatMessage = Union[OpenAIUserMessage, OpenAIAssistantMessage, OpenAISystemMessage]
-
-
-class OpenAIPayload(TypedDict):
-    model: str
-    messages: list[OpenAIChatMessage]
-    max_tokens: int
-
-
-OpenAIHeaders = TypedDict('OpenAIHeaders', {
+RequestHeaders = TypedDict('RequestHeaders', {
     'Content-Type': Literal["application/json"],
-    'Authorization': str
+    'Authorization': NotRequired[str],
 })
 
 
 @dataclass
 class AIResponse:
+    class Status(Enum):
+        OK = "OK"
+        ERROR = "ERROR"
+
     content: str
     completion_tokens: int
     prompt_tokens: int
     total_tokens: int
+    provider: str
+    # enum ok / error
+    status: Status = Status.OK
 
     def __str__(self):
         return self.content
 
 
+class UniversalChatContent(TypedDict):
+    text: str
+    images: NotRequired[List[str]]
 
+
+class UniversalChatMessage(TypedDict):
+    role: Literal["user", "assistant"]
+    content: UniversalChatContent
+
+
+UniversalChatHistory = List[UniversalChatMessage]

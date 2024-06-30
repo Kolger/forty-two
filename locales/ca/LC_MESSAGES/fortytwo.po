@@ -1,0 +1,118 @@
+# Catalan translations for PACKAGE package
+# Traduccions al català del paquet «PACKAGE».
+# Copyright (C) 2024 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-06-30 16:31+0200\n"
+"PO-Revision-Date: 2024-06-30 15:46+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: ca\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: fortytwo/tg.py:62
+msgid "Start the bot"
+msgstr "Inicia el bot"
+
+#: fortytwo/tg.py:63
+msgid "Reset the bot"
+msgstr "Reinicia el bot"
+
+#: fortytwo/tg.py:64
+msgid "Summarize the dialog"
+msgstr "Resumeix el diàleg"
+
+#: fortytwo/tg.py:65
+msgid "Set the AI provider"
+msgstr "Estableix el proveïdor d'IA"
+
+#: fortytwo/tg.py:74
+msgid ""
+"Hello!\n"
+"\n"
+"Send me a message and I will try to help you.\n"
+"You can also send me images.\n"
+"\n"
+"To change to AI Provider use /provider command\n"
+"To clear your dialog history use /reset command"
+msgstr ""
+"Hola!\n"
+"\n"
+"Envia'm un missatge i intentaré ajudar-te.\n"
+"També em pots enviar imatges.\n"
+"\n"
+"Per canviar de proveïdor d'IA utilitza la comanda /provider\n"
+"Per esborrar el teu historial de diàleg utilitza la comanda /reset"
+
+#: fortytwo/tg.py:88
+msgid "Your dialog history has been cleared."
+msgstr "El teu historial de diàleg s'ha esborrat."
+
+#: fortytwo/tg.py:105
+msgid "Processing..."
+msgstr "Processant..."
+
+#: fortytwo/tg.py:113
+#, python-brace-format
+msgid "Your current provider is *{provider}* \n"
+msgstr "El teu proveïdor actual és *{provider}* \n"
+
+#: fortytwo/tg.py:130
+#, python-brace-format
+msgid ""
+"Answer from *{provider_name}*:\n"
+"\n"
+"{answer}"
+msgstr ""
+"Resposta de *{provider_name}*:\n"
+"\n"
+"{answer}"
+
+#: fortytwo/tg.py:137
+msgid "Ask another AI"
+msgstr "Pregunta a una altra IA"
+
+#: fortytwo/tg.py:152
+#, python-brace-format
+msgid ""
+"Your current provider is *{provider}* \n"
+"Select new provider"
+msgstr ""
+"El teu proveïdor actual és *{provider}* \n"
+"Selecciona un nou proveïdor"
+
+#: fortytwo/tg.py:225
+msgid "The operation took too long and was canceled."
+msgstr "L'operació ha trigat massa i s'ha cancel·lat."
+
+#: fortytwo/manager.py:24
+#, python-brace-format
+msgid ""
+"*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because "
+"last message was more than {minutes} minutes ago."
+msgstr ""
+"*❗️❗️❗️ BOT:* El teu historial de conversa anterior s'ha reiniciat perquè "
+"l'últim missatge era de fa més de {minutes} minuts."
+
+#: fortytwo/manager.py:59 fortytwo/manager.py:105
+msgid "You don't have access to a bot. Please contact the administrator."
+msgstr "No tens accés a un bot. Si us plau, contacta amb l'administrador."
+
+#: fortytwo/manager.py:92
+#, python-brace-format
+msgid ""
+"*Your dialog was summorized:* \n"
+"\n"
+"{sum_results}"
+msgstr ""
+"*El teu diàleg s'ha resumit:* \n"
+"\n"
+"{sum_results}"

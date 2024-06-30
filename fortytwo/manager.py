@@ -1,28 +1,68 @@
 import asyncio
 import base64
 import io
+import json
 
 from sqlalchemy import select, update
+from sqlalchemy.orm import selectinload
 
 from fortytwo.database import async_session
 from fortytwo.database.models import User, Message, Picture
 from fortytwo.logger import logger
+from fortytwo.providers import get_provider
 from fortytwo.providers.base import BaseProvider
 from fortytwo.providers.openai import OpenAIProvider
-from fortytwo.providers.types import OpenAIChatMessage, OpenAIUserMessage, OpenAIAssistantMessage
+from fortytwo.providers.gemini import GeminiProvider
+from fortytwo.providers.types import UniversalChatMessage, UniversalChatContent, UniversalChatHistory, AIResponse
 from fortytwo.settings import Settings
-from fortytwo.types import TelegramUser, TelegramMessage
+from fortytwo.types import TelegramUser, TelegramMessage, AIAnswer
+from datetime import datetime, timedelta, timezone
+from .i18n import _
 
 
 class Manager:
-    def __init__(self):
-        self.provider: BaseProvider = OpenAIProvider()
+    MESSAGE_HISTORY_EXPIRATION = _("*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because last message was "
+                                   "more than {minutes} minutes ago.".format(minutes=Settings.HISTORY_EXPIRATION))
 
-    async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[str]:
+    def __init__(self):
+        #self.provider: BaseProvider = OpenAIProvider()
+        #self.provider: BaseProvider = GeminiProvider()
+        #self.provider: BaseProvider = get_provider()
+        ...
+
+    async def get_message_provider(self, message_id: int):
+        """
+        Get provider name for a message
+        This method is used in Telegram class for inline buttons
+
+        :param message_id: Message ID
+        """
+
+        async with async_session() as s:
+            message = (await s.execute(select(Message).where(message_id == Message.id))).scalar()
+            return message.provider
+
+    async def __check_is_history_expired(self, user_id: int, session):
+        last_message = await Message.get_last_message_by_user(user_id, session)
+
+        if last_message:
+            date_to_check = datetime.now(timezone.utc) - timedelta(minutes=Settings.HISTORY_EXPIRATION)
+            if last_message.date_created.replace(tzinfo=None) < date_to_check.replace(tzinfo=None):
+                await Message.clear_by_user(user_id, session)
+                return True
+            else:
+                return False
+
+    async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[AIAnswer]:
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
-                return ["You don't have access to a bot. Please contact the administrator.", ]
+                return [AIAnswer(answer=_("You don't have access to a bot. Please contact the administrator."), message_id=-1), ]
             user = await self.__get_or_create_user(telegram_user, s)
+
+            extra_messages = []
+
+            if await self.__check_is_history_expired(user.id, s):
+                extra_messages = [AIAnswer(answer=self.MESSAGE_HISTORY_EXPIRATION, message_id=-1), ]
 
             chat_history = await self.__prepare_chat_history(user.id, s)
 
@@ -30,26 +70,31 @@ class Manager:
             s.add(message)
             await s.commit()
 
-            answer = await self.provider.text(telegram_message, chat_history=chat_history)
+            answer = await self.__get_provider(user.provider).text(telegram_message, chat_history=chat_history)
+
+            if answer.status == answer.Status.ERROR:
+                message.is_error = True
 
             message.answer = str(answer)
             message.total_tokens = answer.total_tokens
             message.completion_tokens = answer.completion_tokens
             message.prompt_tokens = answer.prompt_tokens
+            message.provider = answer.provider
 
             await s.commit()
 
             await self.__log_message(telegram_user, message, 'TEXT')
 
-            ret_messages = [str(answer), ]
+            ret_messages = [*extra_messages, AIAnswer(answer=str(answer), message_id=message.id), ]
 
             if answer.total_tokens > Settings.MAX_TOTAL_TOKENS:
                 sum_results = await self.process_summarize(user.id, s)
-                ret_messages.append(f'*Your dialog was summorized:* \n\n{sum_results}')
+                ret_messages.append(dict(answer=_('*Your dialog was summorized:* \n\n{sum_results}').format(sum_results=sum_results),
+                                         message_id=-1))
 
             return ret_messages
 
-    async def process_images(self, telegram_user: TelegramUser, telegram_message: TelegramMessage) -> list[str] | None:
+    async def process_images(self, telegram_user: TelegramUser, telegram_message: TelegramMessage) -> list[AIAnswer] | None:
         mm = io.BytesIO()
         await telegram_message.file.download_to_memory(out=mm)
         mm.seek(0)
@@ -57,15 +102,21 @@ class Manager:
 
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
-                return ["You don't have access to a bot. Please contact the administrator.", ]
+                return [AIAnswer(answer=_("You don't have access to a bot. Please contact the administrator."), message_id=-1), ]
             user = await self.__get_or_create_user(telegram_user, s)
 
             pictures_base64 = []
             question = None
             chat_history = []
+            extra_messages = []
 
             if not telegram_message.media_group_id:
-                question = telegram_message.text or "What is on the image?"
+                if await self.__check_is_history_expired(user.id, s):
+                    extra_messages = [AIAnswer(
+                        answer=self.MESSAGE_HISTORY_EXPIRATION,
+                        message_id=-1), ]
+
+                question = telegram_message.text or ""
                 chat_history = await self.__prepare_chat_history(user.id, s)
                 message = Message(user_id=user.id, message_text=question)
                 s.add(message)
@@ -96,6 +147,11 @@ class Manager:
                 pictures_count_after = await Picture.count_by_media_group_id(int(telegram_message.media_group_id), s)
 
                 if pictures_count_before == pictures_count_after:
+                    if await self.__check_is_history_expired(user.id, s):
+                        extra_messages = [AIAnswer(
+                            answer=self.MESSAGE_HISTORY_EXPIRATION,
+                            message_id=-1), ]
+
                     # it was the latest image, so send to AI
                     pictures = (await s.execute(select(Picture).where(int(telegram_message.media_group_id) == Picture.media_group_id))).scalars().all()
                     chat_history = await self.__prepare_chat_history(user.id, s)
@@ -106,7 +162,7 @@ class Manager:
                             question = picture.caption
 
                     if question is None:
-                        question = "What is on the images?"
+                        question = ""
 
                     message = Message(user_id=user.id, message_text=question)
                     s.add(message)
@@ -121,61 +177,47 @@ class Manager:
                 else:
                     return None
 
-            answer = await self.provider.image(pictures_base64, question=question, chat_history=chat_history)
+            answer = await self.__get_provider(user.provider).image(pictures_base64, question=question, chat_history=chat_history)
+
+            if answer.status == answer.Status.ERROR:
+                message.is_error = True
 
             message.answer = str(answer)
             message.total_tokens = answer.total_tokens
             message.completion_tokens = answer.completion_tokens
             message.prompt_tokens = answer.prompt_tokens
+            message.provider = answer.provider
 
-            ret_messages = [str(answer), ]
+            await s.commit()
+
+            ret_messages = [*extra_messages, AIAnswer(answer=str(answer), message_id=message.id), ]
 
             await self.__log_message(telegram_user, message, 'IMAGE')
 
             if answer.total_tokens > Settings.MAX_TOTAL_TOKENS:
                 sum_results = await self.process_summarize(user.id, s)
-                ret_messages.append(f'*Your dialog was summorized:* \n\n{sum_results}')
+                ret_messages.append(dict(answer=f'*Your dialog was summorized:* \n\n{sum_results}', message_id=-1))
 
             return ret_messages
 
-    async def __prepare_chat_history(self, user_id: int, session) -> list[OpenAIChatMessage]:
-        messages = await Message.get_by_user(user_id, session)
-        chat_history = list()
+    async def __prepare_chat_history(self, user_id: int, session, until_message_id: int = None) -> UniversalChatHistory:
+        if until_message_id:
+            messages = await Message.get_by_user_until_id(user_id, session, until_message_id)
+        else:
+            messages = await Message.get_by_user(user_id, session)
+
+        chat_history: UniversalChatHistory = list()
 
         for message in messages:
-            assistant_message: OpenAIAssistantMessage = {
-                "role": "assistant",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": message.answer or ''
-                    },
-                ]
-            }
+            assistant_message: UniversalChatContent = {"text": message.answer or ''}
+            user_message: UniversalChatContent = {"text": message.message_text or '', 'images': []}
+            pictures: list[Picture] = (await session.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
 
-            user_message: OpenAIUserMessage = {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": message.message_text or ''
-                    },
-                ]
-            }
-
-            pictures = (await session.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
             for picture in pictures:
-                user_message['content'].append(
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{picture.file_base64}"
-                        }
-                    }
-                )
+                user_message['images'].append(picture.file_base64)
 
-            chat_history.append(user_message)
-            chat_history.append(assistant_message)
+            chat_history.append(UniversalChatMessage(role='user', content=user_message))
+            chat_history.append(UniversalChatMessage(role='assistant', content=assistant_message))
 
         return chat_history
 
@@ -188,6 +230,23 @@ class Manager:
             await s.commit()
 
         return user
+
+    async def get_user(self, telegram_user: TelegramUser):
+        async with async_session() as s:
+            user = await self.__get_or_create_user(telegram_user, s)
+
+            return dict(
+                user_id=user.id,
+                provider=user.provider or Settings.PROVIDER
+            )
+
+    def __get_provider(self, user_provider: str | None) -> BaseProvider:
+        if user_provider:
+            selected_provider = user_provider
+        else:
+            selected_provider = Settings.PROVIDER
+
+        return get_provider(selected_provider)
 
     async def __check_user_access(self, telegram_user: TelegramUser):
         if not Settings.ALLOWED_USERS:
@@ -211,12 +270,46 @@ class Manager:
 
     async def process_summarize(self, user_id, s):
         chat_history = await self.__prepare_chat_history(user_id, s)
-        system_prompt = "Summarize this dialog for me. Answer USING ONLY English not another language."
+        system_prompt = "Summarize this dialog (what we'e discussed before) for me. Answer (this time) USING ONLY English not another language."
 
-        summarized_dialog = await self.provider.text(question=system_prompt, system_prompt=system_prompt, chat_history=chat_history)
+        user = (await s.execute(select(User).where(User.id == user_id))).scalar()
+
+        summarized_dialog = await self.__get_provider(user.provider).text(question=system_prompt, system_prompt=system_prompt, chat_history=chat_history)
         await Message.clear_by_user(user_id, s)
         message = Message(user_id=user_id, message_text="What we've discussed earlier?", answer=str(summarized_dialog))
         s.add(message)
         await s.commit()
 
         return str(summarized_dialog)
+
+    async def ask_another_provider(self, message_id: int, provider_name: str) -> AIAnswer:
+        provider = get_provider(provider_name)
+
+        async with async_session() as s:
+            message = await s.get(Message, message_id, options=[selectinload(Message.user)])
+            pictures: list[Picture] = (await s.execute(select(Picture).where(Picture.message_id == message.id))).scalars().all()
+            chat_history = await self.__prepare_chat_history(user_id=message.user_id, session=s, until_message_id=message_id)
+
+            if len(pictures) > 0:
+                pictures_base64 = [picture.file_base64 for picture in pictures]
+                answer = await provider.image(base64_images=pictures_base64, question=message.message_text, chat_history=chat_history)
+            else:
+                answer = await provider.text(message.message_text, chat_history=chat_history)
+
+            new_message = Message(
+                user_id=message.user.id,
+                message_text=message.message_text,
+                parent_message_id=message_id,
+                answer=str(answer),
+                provider=provider_name,
+                is_ask_another_ai=True,
+                completion_tokens=answer.completion_tokens,
+                prompt_tokens=answer.prompt_tokens,
+                total_tokens=answer.total_tokens)
+
+            s.add(new_message)
+            await s.commit()
+            await self.__log_message(TelegramUser(id=message.user.chat_id, username=message.user.username, title=message.user.title),
+                                     new_message, f'ASK ANOTHER ({provider_name})')
+
+            return AIAnswer(answer=str(answer), message_id=message_id)
