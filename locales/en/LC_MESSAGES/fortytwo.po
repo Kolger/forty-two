@@ -1,0 +1,102 @@
+# English translations for PACKAGE package.
+# Copyright (C) 2024 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-06-30 16:31+0200\n"
+"PO-Revision-Date: 2024-06-30 15:46+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: fortytwo/tg.py:62
+msgid "Start the bot"
+msgstr ""
+
+#: fortytwo/tg.py:63
+msgid "Reset the bot"
+msgstr ""
+
+#: fortytwo/tg.py:64
+msgid "Summarize the dialog"
+msgstr ""
+
+#: fortytwo/tg.py:65
+msgid "Set the AI provider"
+msgstr ""
+
+#: fortytwo/tg.py:74
+msgid ""
+"Hello!\n"
+"\n"
+"Send me a message and I will try to help you.\n"
+"You can also send me images.\n"
+"\n"
+"To change to AI Provider use /provider command\n"
+"To clear your dialog history use /reset command"
+msgstr ""
+
+#: fortytwo/tg.py:88
+msgid "Your dialog history has been cleared."
+msgstr "Your dialog history has been cleared."
+
+#: fortytwo/tg.py:105
+msgid "Processing..."
+msgstr "Processing..."
+
+#: fortytwo/tg.py:113
+#, python-brace-format
+msgid "Your current provider is *{provider}* \n"
+msgstr ""
+
+#: fortytwo/tg.py:130
+#, python-brace-format
+msgid ""
+"Answer from *{provider_name}*:\n"
+"\n"
+"{answer}"
+msgstr ""
+
+#: fortytwo/tg.py:137
+msgid "Ask another AI"
+msgstr ""
+
+#: fortytwo/tg.py:152
+#, python-brace-format
+msgid ""
+"Your current provider is *{provider}* \n"
+"Select new provider"
+msgstr ""
+"Your current provider is *{provider}* \n"
+"Select new provider"
+
+#: fortytwo/tg.py:225
+msgid "The operation took too long and was canceled."
+msgstr "The operation took too long and was canceled."
+
+#: fortytwo/manager.py:24
+#, python-brace-format
+msgid ""
+"*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because "
+"last message was more than {minutes} minutes ago."
+msgstr ""
+
+#: fortytwo/manager.py:59 fortytwo/manager.py:105
+msgid "You don't have access to a bot. Please contact the administrator."
+msgstr ""
+
+#: fortytwo/manager.py:92
+#, python-brace-format
+msgid ""
+"*Your dialog was summorized:* \n"
+"\n"
+"{sum_results}"
+msgstr ""

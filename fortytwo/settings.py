@@ -19,3 +19,4 @@ class Settings:
     ALLOWED_USERS = os.environ.get('ALLOWED_USERS', None)
     LOG_MESSAGES = os.environ.get('LOG_MESSAGES', False)
     HISTORY_EXPIRATION = int(os.environ.get('HISTORY_EXPIRATION', 30))
+    LANGUAGE = os.environ.get('LANGUAGE', 'en')

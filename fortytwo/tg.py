@@ -12,6 +12,7 @@ from fortytwo.manager import Manager
 from fortytwo.providers import available_providers
 from fortytwo.settings import Settings
 from fortytwo.types import TelegramUser, TelegramMessage, AIAnswer
+from .i18n import _
 
 
 class TelegramBot:
@@ -58,10 +59,10 @@ class TelegramBot:
 
     async def __set_commands(self):
         await self.application.bot.set_my_commands([
-            ('start', 'Start the bot'),
-            ('reset', 'Reset the bot'),
-            ('summarize', 'Summarize the dialog'),
-            ('provider', 'Set the AI provider')
+            ('start', _('Start the bot')),
+            ('reset', _('Reset the bot')),
+            ('summarize', _('Summarize the dialog')),
+            ('provider', _('Set the AI provider'))
         ])
 
     async def start(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -70,7 +71,11 @@ class TelegramBot:
         await self.manager.get_user(tg_user)
 
         await self.__set_commands()
-        await tg_update.message.reply_text('Hi!')
+        await tg_update.message.reply_text(_('Hello!\n\n'
+                                             'Send me a message and I will try to help you.\n'
+                                             'You can also send me images.\n\n'
+                                             'To change to AI Provider use /provider command\n'
+                                             'To clear your dialog history use /reset command'))
 
     async def reset(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
         tg_user = TelegramUser(id=tg_update.message.chat.id, username=tg_update.message.chat.username,
@@ -80,7 +85,7 @@ class TelegramBot:
         async with async_session() as s:
             user = await User.get_by_chat_id(tg_update.message.chat.id, s)
             await Message.clear_by_user(user.id, s)
-        await tg_update.message.reply_text('Your dialog history has been cleared.')
+        await tg_update.message.reply_text(_('Your dialog history has been cleared.'))
 
     async def __get_inline_keyboard_ask_another_ai_list(self, message_id) -> InlineKeyboardMarkup:
         keyboard = []
@@ -94,10 +99,10 @@ class TelegramBot:
 
         return reply_markup
 
-    async def handle_inline_keyboard(self, tg_update: Update, _: CallbackContext) -> None:
+    async def handle_inline_keyboard(self, tg_update: Update, context: CallbackContext) -> None:
         query = tg_update.callback_query
 
-        await query.answer("Processing...")
+        await query.answer(_("Processing..."))
 
         if query.data.startswith("set_provider_"):
             provider = query.data.split("_")[2]
@@ -105,7 +110,7 @@ class TelegramBot:
                 user = await User.get_by_chat_id(query.message.chat.id, s)
                 await user.set_provider(provider, s)
                 await s.commit()
-            await query.edit_message_text(f"Your current provider is *{provider}* \n", parse_mode=ParseMode.MARKDOWN)
+            await query.edit_message_text(_("Your current provider is *{provider}* \n").format(provider=provider), parse_mode=ParseMode.MARKDOWN)
             return None
 
         if query.data.startswith("another_"):
@@ -122,14 +127,14 @@ class TelegramBot:
                 ask_another_provider_task = asyncio.ensure_future(self.manager.ask_another_provider(message_id, provider_name))
                 await self.__send_typing_until_complete(query.message.chat.id, ask_another_provider_task)
                 answer = await ask_another_provider_task
-                answer_text = f"Answer from *{provider_name}*:\n\n{answer.answer}"
+                answer_text = _("Answer from *{provider_name}*:\n\n{answer}").format(provider_name=provider_name, answer=answer.answer)
 
                 await self.__send_message(query.message.chat.id, answer_text, query.message.message_id)
 
         return None
 
     def __get_inline_keyboard_ask_another_ai(self, message_id: int) -> InlineKeyboardMarkup:
-        keyboard = ([InlineKeyboardButton('Ask another AI', callback_data=f"another_{message_id}")], )
+        keyboard = ([InlineKeyboardButton(_('Ask another AI'), callback_data=f"another_{message_id}")], )
 
         return InlineKeyboardMarkup(keyboard)
 
@@ -144,7 +149,8 @@ class TelegramBot:
         tg_user = TelegramUser(id=tg_update.message.chat.id, username=tg_update.message.chat.username,
                                                 title=tg_update.message.chat.title)
         user_data = await self.manager.get_user(tg_user)
-        await tg_update.message.reply_text(f'Your current provider is *{user_data['provider']}* \nSelect new provider', reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
+        await tg_update.message.reply_text(_('Your current provider is *{provider}* \nSelect new provider')
+                                           .format(provider=user_data['provider']), reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
 
     async def summarize(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
         async with async_session() as s:
@@ -155,6 +161,14 @@ class TelegramBot:
             await tg_update.message.reply_text(sum_results, reply_to_message_id=tg_update.message.message_id)
 
     async def __send_message(self, chat_id: int, message: str, reply_to: int = None, reply_markup: InlineKeyboardMarkup = None):
+        """
+        Send a message to the user.
+
+        @param chat_id: Chat ID in Telegram
+        @param message: Message text
+        @param reply_to: Message ID to reply to
+        @param reply_markup: InlineKeyboardMarkup
+        """
         await self.__set_commands()
         if len(message) < constants.MessageLimit.MAX_TEXT_LENGTH:
             await self.__send_message_raw(chat_id, message, reply_to, reply_markup)
@@ -172,6 +186,15 @@ class TelegramBot:
                     await self.__send_message_raw(chat_id, chunk, reply_to)
 
     async def __send_message_raw(self, chat_id: int, message: str, reply_to: int = None, reply_markup: InlineKeyboardMarkup = None):
+        """
+        Send a message to the user without checking the length.
+        User only by __send_message method. Should not be used directly to avoid sending messages longer than allowed by Telegram.
+
+        @param chat_id: Chat ID in Telegram
+        @param message: Message text
+        @param reply_to: Message ID to reply to
+        @param reply_markup: InlineKeyboardMarkup
+        """
         try:
             await self.application.bot.send_message(chat_id=chat_id, text=message,
                                                     reply_to_message_id=reply_to, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
@@ -181,6 +204,12 @@ class TelegramBot:
             await self.application.bot.send_message(chat_id=chat_id, text=message, reply_to_message_id=reply_to, reply_markup=reply_markup)
 
     async def __send_messages(self, tg_update: Update, messages: list[AIAnswer]):
+        """
+        Send a list of AIAnswer to the user.
+
+        @param tg_update: Telegram Update object
+        @param messages: List of AIAnswer
+        """
         for message in messages:
             reply_markup = None
             if message.message_id > 0:
@@ -193,7 +222,7 @@ class TelegramBot:
             await asyncio.wait_for(self.__send_typing_until_complete_infinite(chat_id, task), timeout=60)
         except asyncio.TimeoutError:
             task.cancel()
-            await self.application.bot.send_message(chat_id, "The operation took too long and was canceled.")
+            await self.application.bot.send_message(chat_id, _("The operation took too long and was canceled."))
 
     async def __send_typing_until_complete_infinite(self, chat_id: int, task: asyncio.Task):
         while not task.done():

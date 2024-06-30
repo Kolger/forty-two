@@ -17,9 +17,13 @@ from fortytwo.providers.types import UniversalChatMessage, UniversalChatContent,
 from fortytwo.settings import Settings
 from fortytwo.types import TelegramUser, TelegramMessage, AIAnswer
 from datetime import datetime, timedelta, timezone
+from .i18n import _
 
 
 class Manager:
+    MESSAGE_HISTORY_EXPIRATION = _("*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because last message was "
+                                   "more than {minutes} minutes ago.".format(minutes=Settings.HISTORY_EXPIRATION))
+
     def __init__(self):
         #self.provider: BaseProvider = OpenAIProvider()
         #self.provider: BaseProvider = GeminiProvider()
@@ -52,13 +56,13 @@ class Manager:
     async def process_text(self, telegram_user: TelegramUser, telegram_message: str) -> list[AIAnswer]:
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
-                return [AIAnswer(answer="You don't have access to a bot. Please contact the administrator.", message_id=-1), ]
+                return [AIAnswer(answer=_("You don't have access to a bot. Please contact the administrator."), message_id=-1), ]
             user = await self.__get_or_create_user(telegram_user, s)
 
             extra_messages = []
 
             if await self.__check_is_history_expired(user.id, s):
-                extra_messages = [AIAnswer(answer="*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because last message was more than 30 minutes ago.", message_id=-1), ]
+                extra_messages = [AIAnswer(answer=self.MESSAGE_HISTORY_EXPIRATION, message_id=-1), ]
 
             chat_history = await self.__prepare_chat_history(user.id, s)
 
@@ -85,7 +89,8 @@ class Manager:
 
             if answer.total_tokens > Settings.MAX_TOTAL_TOKENS:
                 sum_results = await self.process_summarize(user.id, s)
-                ret_messages.append(dict(answer=f'*Your dialog was summorized:* \n\n{sum_results}', message_id=-1))
+                ret_messages.append(dict(answer=_('*Your dialog was summorized:* \n\n{sum_results}').format(sum_results=sum_results),
+                                         message_id=-1))
 
             return ret_messages
 
@@ -97,7 +102,7 @@ class Manager:
 
         async with async_session() as s:
             if not await self.__check_user_access(telegram_user):
-                return [AIAnswer(answer="You don't have access to a bot. Please contact the administrator.", message_id=-1), ]
+                return [AIAnswer(answer=_("You don't have access to a bot. Please contact the administrator."), message_id=-1), ]
             user = await self.__get_or_create_user(telegram_user, s)
 
             pictures_base64 = []
@@ -108,7 +113,7 @@ class Manager:
             if not telegram_message.media_group_id:
                 if await self.__check_is_history_expired(user.id, s):
                     extra_messages = [AIAnswer(
-                        answer="*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because last message was more than 30 minutes ago.",
+                        answer=self.MESSAGE_HISTORY_EXPIRATION,
                         message_id=-1), ]
 
                 question = telegram_message.text or ""
@@ -144,7 +149,7 @@ class Manager:
                 if pictures_count_before == pictures_count_after:
                     if await self.__check_is_history_expired(user.id, s):
                         extra_messages = [AIAnswer(
-                            answer="*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because last message was more than 30 minutes ago.",
+                            answer=self.MESSAGE_HISTORY_EXPIRATION,
                             message_id=-1), ]
 
                     # it was the latest image, so send to AI
