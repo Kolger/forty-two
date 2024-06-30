@@ -95,7 +95,7 @@ class AnthropicProvider(BaseProvider):
         chat_history = self.__convert_chat_history(chat_history)
 
         pictures: list[dict] = []
-        print(chat_history)
+
         for base64_image in base64_images:
             pictures.append({
                 "type": "image",
