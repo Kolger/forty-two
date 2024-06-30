@@ -1,7 +1,7 @@
 import asyncio
 
 from sqlalchemy import update
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, constants
 from telegram.constants import ParseMode
 from telegram.error import BadRequest
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler, CallbackContext
@@ -170,7 +170,21 @@ class TelegramBot:
             reply_markup = None
             if message.message_id > 0:
                 reply_markup = self.__get_inline_keyboard_ask_another_ai(message.message_id)
-            await self.__send_message(tg_update.message.chat.id, message.answer, tg_update.message.message_id, reply_markup=reply_markup)
+
+            if len(message.answer) < constants.MessageLimit.MAX_TEXT_LENGTH:
+                await self.__send_message(tg_update.message.chat.id, message.answer, tg_update.message.message_id, reply_markup=reply_markup)
+            else:
+                # message longer than limit allowed by telegram for 1 message
+                # in this case we split answer from AI to multiple messages
+                chunks = [message.answer[i:i + constants.MessageLimit.MAX_TEXT_LENGTH] for i in
+                          range(0, len(message.answer), constants.MessageLimit.MAX_TEXT_LENGTH)]
+
+                for i, chunk in enumerate(chunks):
+                    if i == len(chunks) - 1:
+                        # last message in chunks, only for last message add reply_markup
+                        await self.__send_message(tg_update.message.chat.id, chunk, tg_update.message.message_id, reply_markup=reply_markup)
+                    else:
+                        await self.__send_message(tg_update.message.chat.id, chunk, tg_update.message.message_id)
 
     async def __send_typing_until_complete(self, chat_id: int, task: asyncio.Task):
         try:
