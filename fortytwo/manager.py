@@ -22,7 +22,7 @@ from .i18n import _
 
 class Manager:
     MESSAGE_HISTORY_EXPIRATION = _("*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because last message was "
-                                   "more than {minutes} minutes ago.".format(minutes=Settings.HISTORY_EXPIRATION))
+                                   "more than {minutes} minutes ago.").format(minutes=Settings.HISTORY_EXPIRATION)
 
     def __init__(self):
         #self.provider: BaseProvider = OpenAIProvider()
