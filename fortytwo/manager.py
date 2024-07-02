@@ -61,8 +61,10 @@ class Manager:
 
             extra_messages = []
 
-            if await self.__check_is_history_expired(user.id, s):
-                extra_messages = [AIAnswer(answer=self.MESSAGE_HISTORY_EXPIRATION, message_id=-1), ]
+            await self.__check_is_history_expired(user.id, s)
+
+            #if await self.__check_is_history_expired(user.id, s):
+                #extra_messages = [AIAnswer(answer=self.MESSAGE_HISTORY_EXPIRATION, message_id=-1), ]
 
             chat_history = await self.__prepare_chat_history(user.id, s)
 
@@ -111,10 +113,11 @@ class Manager:
             extra_messages = []
 
             if not telegram_message.media_group_id:
-                if await self.__check_is_history_expired(user.id, s):
-                    extra_messages = [AIAnswer(
-                        answer=self.MESSAGE_HISTORY_EXPIRATION,
-                        message_id=-1), ]
+                await self.__check_is_history_expired(user.id, s)
+                #if await self.__check_is_history_expired(user.id, s):
+                #    extra_messages = [AIAnswer(
+                #        answer=self.MESSAGE_HISTORY_EXPIRATION,
+                #        message_id=-1), ]
 
                 question = telegram_message.text or ""
                 chat_history = await self.__prepare_chat_history(user.id, s)
@@ -147,10 +150,11 @@ class Manager:
                 pictures_count_after = await Picture.count_by_media_group_id(int(telegram_message.media_group_id), s)
 
                 if pictures_count_before == pictures_count_after:
-                    if await self.__check_is_history_expired(user.id, s):
-                        extra_messages = [AIAnswer(
-                            answer=self.MESSAGE_HISTORY_EXPIRATION,
-                            message_id=-1), ]
+                    await self.__check_is_history_expired(user.id, s)
+                    #if await self.__check_is_history_expired(user.id, s):
+                    #    extra_messages = [AIAnswer(
+                    #        answer=self.MESSAGE_HISTORY_EXPIRATION,
+                    #        message_id=-1), ]
 
                     # it was the latest image, so send to AI
                     pictures = (await s.execute(select(Picture).where(int(telegram_message.media_group_id) == Picture.media_group_id))).scalars().all()
