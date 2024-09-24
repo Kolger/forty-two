@@ -2,21 +2,27 @@ import asyncio
 import base64
 import io
 import json
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
 from fortytwo.database import async_session
-from fortytwo.database.models import User, Message, Picture
+from fortytwo.database.models import Message, Picture, User
 from fortytwo.logger import logger
 from fortytwo.providers import get_provider
 from fortytwo.providers.base import BaseProvider
-from fortytwo.providers.openai import OpenAIProvider
 from fortytwo.providers.gemini import GeminiProvider
-from fortytwo.providers.types import UniversalChatMessage, UniversalChatContent, UniversalChatHistory, AIResponse
+from fortytwo.providers.openai import OpenAIProvider
+from fortytwo.providers.types import (
+    AIResponse,
+    UniversalChatContent,
+    UniversalChatHistory,
+    UniversalChatMessage,
+)
 from fortytwo.settings import Settings
-from fortytwo.types import TelegramUser, TelegramMessage, AIAnswer
-from datetime import datetime, timedelta, timezone
+from fortytwo.types import AIAnswer, TelegramMessage, TelegramUser
+
 from .i18n import _
 
 
@@ -258,7 +264,8 @@ class Manager:
 
         allowed_users_list = Settings.ALLOWED_USERS.split(',')
 
-        if telegram_user.username not in allowed_users_list and telegram_user.id not in allowed_users_list:
+        if telegram_user.username not in allowed_users_list and str(telegram_user.id) not in allowed_users_list:
+            logger.info(f"User {telegram_user.username} with id {telegram_user.id} is not allowed to use this bot")
             return False
 
         return True
