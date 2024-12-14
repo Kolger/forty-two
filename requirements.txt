@@ -1,6 +1,6 @@
 python-dotenv==1.0.1
-python-telegram-bot==21.3
-aiohttp==3.9.5
-sqlalchemy[asyncio]
-alembic==1.13.1
+python-telegram-bot==21.9
+aiohttp==3.11.10
+sqlalchemy[asyncio]==2.0.36
+alembic==1.14.0
 aiosqlite==0.20.0
