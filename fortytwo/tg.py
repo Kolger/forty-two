@@ -1,17 +1,21 @@
 import asyncio
+from typing import Coroutine
 
 from sqlalchemy import update
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, constants
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, constants
 from telegram.constants import ParseMode
 from telegram.error import BadRequest
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler, CallbackContext
+from telegram.ext import Application, CallbackContext, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, filters
 
 from fortytwo.database import async_session
-from fortytwo.database.models import User, Message
+from fortytwo.database.models import Message, User
+from fortytwo.logger import logger
 from fortytwo.manager import Manager
 from fortytwo.providers import available_providers
+from fortytwo.providers.exceptions import ProviderError
 from fortytwo.settings import Settings
-from fortytwo.types import TelegramUser, TelegramMessage, AIAnswer
+from fortytwo.types import AIAnswer, TelegramMessage, TelegramUser
+
 from .i18n import _
 
 
@@ -35,12 +39,13 @@ class TelegramBot:
         telegram_user = TelegramUser(id=tg_update.message.chat.id, username=tg_update.message.chat.username,
                                      title=tg_update.message.chat.title)
 
-        process_text_task = asyncio.ensure_future(self.manager.process_text(telegram_user, tg_update.message.text))
-        await self.__send_typing_until_complete(tg_update.message.chat.id, process_text_task)
-
-        messages = await process_text_task
-
-        await self.__send_messages(tg_update, messages)
+        try:
+            coro = self.manager.process_text(telegram_user, tg_update.message.text)
+            messages = await self.__execute_with_typing(coro, tg_update.message.chat.id)
+            await self.__send_messages(tg_update, messages)
+        except ProviderError as e:
+            logger.error(f"{telegram_user.username} TEXT | ProviderError: {e}")
+            await self.application.bot.send_message(tg_update.message.chat.id, _("Something went wrong with the AI provider during processing text. Please try again later."))
 
     async def handle_image(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         photo_file = await tg_update.message.photo[-1].get_file()
@@ -49,13 +54,14 @@ class TelegramBot:
         telegram_user = TelegramUser(id=tg_update.message.chat.id, username=tg_update.message.chat.username,
                                      title=tg_update.message.chat.title)
 
-        process_image_task = asyncio.ensure_future(self.manager.process_images(telegram_user, telegram_message))
-        await self.__send_typing_until_complete(tg_update.message.chat.id, process_image_task)
-
-        messages = await process_image_task
-
-        if messages:
+        try:
+            coro = self.manager.process_images(telegram_user, telegram_message)
+            messages = await self.__execute_with_typing(coro, tg_update.message.chat.id)
             await self.__send_messages(tg_update, messages)
+        except ProviderError as e:
+            await self.application.bot.send_message(tg_update.message.chat.id, _("Something went wrong with the AI provider during processing images. Please try again later."))
+            logger.error(f"{telegram_user.username} IMAGE | ProviderError: {e}")
+            return            
 
     async def __set_commands(self):
         await self.application.bot.set_my_commands([
@@ -124,9 +130,10 @@ class TelegramBot:
                 provider_name = query.data.split("_")[1]
                 keyboard = self.__get_inline_keyboard_ask_another_ai(message_id)
                 await query.edit_message_reply_markup(keyboard)
-                ask_another_provider_task = asyncio.ensure_future(self.manager.ask_another_provider(message_id, provider_name))
-                await self.__send_typing_until_complete(query.message.chat.id, ask_another_provider_task)
-                answer = await ask_another_provider_task
+                print(123)
+                coro = self.manager.ask_another_provider(message_id, provider_name)
+                print(456)
+                answer = await self.__execute_with_typing(coro, query.message.chat.id)
                 answer_text = _("Answer from *{provider_name}*:\n\n{answer}").format(provider_name=provider_name, answer=answer.answer)
 
                 await self.__send_message(query.message.chat.id, answer_text, query.message.message_id)
@@ -158,9 +165,8 @@ class TelegramBot:
     async def summarize(self, tg_update: Update, context: ContextTypes.DEFAULT_TYPE):
         async with async_session() as s:
             user = await User.get_by_chat_id(tg_update.message.chat.id, s)
-            sum_task = asyncio.ensure_future(self.manager.process_summarize(user.id, s))
-            await self.__send_typing_until_complete(tg_update.message.chat.id, sum_task)
-            sum_results = await sum_task
+            coro = self.manager.process_summarize(user.id, s)
+            sum_results = await self.__execute_with_typing(coro, tg_update.message.chat.id)
             await tg_update.message.reply_text(sum_results, reply_to_message_id=tg_update.message.message_id)
 
     async def __send_message(self, chat_id: int, message: str, reply_to: int = None, reply_markup: InlineKeyboardMarkup = None):
@@ -219,18 +225,27 @@ class TelegramBot:
                 reply_markup = self.__get_inline_keyboard_ask_another_ai(message.message_id)
 
             await self.__send_message(tg_update.message.chat.id, message.answer, tg_update.message.message_id, reply_markup=reply_markup)
-
-    async def __send_typing_until_complete(self, chat_id: int, task: asyncio.Task):
+            
+    async def __execute_with_typing(self, coro: Coroutine, chat_id: int) -> AIAnswer | list[AIAnswer] | bool:
+        """
+        Execute a coroutine and show typing until the coroutine is done or the timeout is reached.
+        """
+        async def show_typing():
+            while True:
+                await self.application.bot.send_chat_action(chat_id, 'typing')
+                await asyncio.sleep(2)
         try:
-            await asyncio.wait_for(self.__send_typing_until_complete_infinite(chat_id, task), timeout=60)
+            typing_task = asyncio.create_task(show_typing())
+            result = await asyncio.wait_for(coro, timeout=60)
+            typing_task.cancel()
+            return result
         except asyncio.TimeoutError:
-            task.cancel()
+            typing_task.cancel()
             await self.application.bot.send_message(chat_id, _("The operation took too long and was canceled."))
-
-    async def __send_typing_until_complete_infinite(self, chat_id: int, task: asyncio.Task):
-        while not task.done():
-            await self.application.bot.send_chat_action(chat_id, 'typing')
-            await asyncio.sleep(2)
+            return False
+        except Exception as e:
+            typing_task.cancel()
+            raise e
 
     def run(self):
         self.application.run_polling(allowed_updates=Update.ALL_TYPES)

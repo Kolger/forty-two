@@ -2,11 +2,14 @@ import json
 import os
 
 import aiohttp
+from aiohttp.client_exceptions import ContentTypeError
 
 from fortytwo.settings import Settings
+
 from .base import BaseProvider
-from .types import RequestHeaders,  AIResponse,  UniversalChatHistory
-from .openai_types import OpenAIChatMessage, OpenAIImageMessage, OpenAIPayload, OpenAIAssistantMessage, OpenAIUserMessage
+from .exceptions import ProviderError
+from .openai_types import OpenAIAssistantMessage, OpenAIChatMessage, OpenAIImageMessage, OpenAIPayload, OpenAIUserMessage
+from .types import AIResponse, RequestHeaders, UniversalChatHistory
 
 
 class OpenAIProvider(BaseProvider):
@@ -124,9 +127,9 @@ class OpenAIProvider(BaseProvider):
         url = f'{self.base_api_url}/chat/completions'
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
             async with session.post(url, headers=headers, data=json.dumps(payload)) as resp:
-                response = await resp.json()
-
                 try:
+                    response = await resp.json()
+                
                     ai_response = AIResponse(
                         content=response['choices'][0]['message']['content'],
                         completion_tokens=response['usage']['completion_tokens'],
@@ -135,6 +138,8 @@ class OpenAIProvider(BaseProvider):
                         status=AIResponse.Status.OK,
                         provider=self.provider_name
                     )
+                except ContentTypeError:
+                    raise ProviderError(f"Failed to make request to {self.provider_name} API.")
                 except KeyError as e:
                     ai_response = AIResponse(
                         content=f"Failed to make request to OpenAI API. Response: {response}",

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-30 16:31+0200\n"
+"POT-Creation-Date: 2025-01-23 13:47+0100\n"
 "PO-Revision-Date: 2024-06-30 15:46+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -18,23 +18,35 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: fortytwo/tg.py:48
+msgid ""
+"Something went wrong with the AI provider during processing text. Please try "
+"again later."
+msgstr "Algo salió mal con el proveedor de IA durante el procesamiento del texto. Por favor, inténtalo de nuevo más tarde."
+
 #: fortytwo/tg.py:62
+msgid ""
+"Something went wrong with the AI provider during processing images. Please "
+"try again later."
+msgstr "Algo salió mal con el proveedor de IA durante el procesamiento de imágenes. Por favor, inténtalo de nuevo más tarde."
+
+#: fortytwo/tg.py:68
 msgid "Start the bot"
 msgstr "Iniciar el bot"
 
-#: fortytwo/tg.py:63
+#: fortytwo/tg.py:69
 msgid "Reset the bot"
 msgstr "Reiniciar el bot"
 
-#: fortytwo/tg.py:64
+#: fortytwo/tg.py:70
 msgid "Summarize the dialog"
 msgstr "Resumir el diálogo"
 
-#: fortytwo/tg.py:65
+#: fortytwo/tg.py:71
 msgid "Set the AI provider"
 msgstr "Establecer el proveedor de IA"
 
-#: fortytwo/tg.py:74
+#: fortytwo/tg.py:80
 msgid ""
 "Hello!\n"
 "\n"
@@ -52,20 +64,20 @@ msgstr ""
 "Para cambiar de proveedor de IA usa el comando /provider\n"
 "Para borrar tu historial de diálogo usa el comando /reset"
 
-#: fortytwo/tg.py:88
+#: fortytwo/tg.py:94
 msgid "Your dialog history has been cleared."
 msgstr "Tu historial de diálogo ha sido borrado."
 
-#: fortytwo/tg.py:105
+#: fortytwo/tg.py:111
 msgid "Processing..."
 msgstr "Procesando..."
 
-#: fortytwo/tg.py:113
+#: fortytwo/tg.py:119
 #, python-brace-format
 msgid "Your current provider is *{provider}* \n"
 msgstr "Tu proveedor actual es *{provider}* \n"
 
-#: fortytwo/tg.py:130
+#: fortytwo/tg.py:137
 #, python-brace-format
 msgid ""
 "Answer from *{provider_name}*:\n"
@@ -76,11 +88,11 @@ msgstr ""
 "\n"
 "{answer}"
 
-#: fortytwo/tg.py:137
+#: fortytwo/tg.py:147
 msgid "Ask another AI"
 msgstr "Preguntar a otra IA"
 
-#: fortytwo/tg.py:152
+#: fortytwo/tg.py:162
 #, python-brace-format
 msgid ""
 "Your current provider is *{provider}* \n"
@@ -89,24 +101,24 @@ msgstr ""
 "Tu proveedor actual es *{provider}* \n"
 "Selecciona un nuevo proveedor"
 
-#: fortytwo/tg.py:225
+#: fortytwo/tg.py:244
 msgid "The operation took too long and was canceled."
 msgstr "La operación tardó demasiado y fue cancelada."
 
-#: fortytwo/manager.py:24
+#: fortytwo/manager.py:30
 #, python-brace-format
 msgid ""
 "*❗️❗️❗️ BOT:* Your previous conversation history has been reseted because "
 "last message was more than {minutes} minutes ago."
 msgstr ""
-"*❗️❗️❗️ BOT:* Tu historial de conversación previo ha sido reiniciado "
-"porque el último mensaje fue hace más de {minutes} minutos."
+"*❗️❗️❗️ BOT:* Tu historial de conversación previo ha sido reiniciado porque "
+"el último mensaje fue hace más de {minutes} minutos."
 
-#: fortytwo/manager.py:59 fortytwo/manager.py:105
+#: fortytwo/manager.py:65 fortytwo/manager.py:113
 msgid "You don't have access to a bot. Please contact the administrator."
 msgstr "No tienes acceso a un bot. Por favor, contacta al administrador."
 
-#: fortytwo/manager.py:92
+#: fortytwo/manager.py:100
 #, python-brace-format
 msgid ""
 "*Your dialog was summorized:* \n"

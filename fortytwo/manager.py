@@ -202,7 +202,7 @@ class Manager:
 
             ret_messages = [*extra_messages, AIAnswer(answer=str(answer), message_id=message.id), ]
 
-            await self.__log_message(telegram_user, message, 'IMAGE')
+            await self.__log_message(telegram_user, message, 'IMAGE', provider=answer.provider)
 
             if answer.total_tokens > Settings.MAX_TOTAL_TOKENS:
                 sum_results = await self.process_summarize(user.id, s)
