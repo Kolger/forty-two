@@ -91,7 +91,7 @@ class Manager:
 
             await s.commit()
 
-            await self.__log_message(telegram_user, message, 'TEXT')
+            await self.__log_message(telegram_user, message, 'TEXT', provider=answer.provider)
 
             ret_messages = [*extra_messages, AIAnswer(answer=str(answer), message_id=message.id), ]
 
@@ -270,10 +270,10 @@ class Manager:
 
         return True
 
-    async def __log_message(self, telegram_user: TelegramUser, message: Message, prefix: str = 'TEXT'):
+    async def __log_message(self, telegram_user: TelegramUser, message: Message, prefix: str = 'TEXT', provider: str = None):
         if Settings.LOG_MESSAGES:
             logger.info(f"Q {prefix} | User: {telegram_user.username} {message.message_text.replace('\n', ' ').replace('\r', ' ')}")
-            logger.info(f"A {prefix} | User: {telegram_user.username} "
+            logger.info(f"A {prefix} {provider} | User: {telegram_user.username} "
                         f"{message.answer.replace('\n', ' ').replace('\r', ' ')} | "
                         f"Prompt tokens: {message.prompt_tokens}, "
                         f"Completion tokens: {message.completion_tokens}, "
