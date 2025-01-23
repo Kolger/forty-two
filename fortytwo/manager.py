@@ -22,7 +22,7 @@ from fortytwo.providers.types import (
 )
 from fortytwo.settings import Settings
 from fortytwo.types import AIAnswer, TelegramMessage, TelegramUser
-
+from fortytwo.providers.exceptions import ProviderImageNotSupportedError
 from .i18n import _
 
 
@@ -112,6 +112,10 @@ class Manager:
             if not await self.__check_user_access(telegram_user):
                 return [AIAnswer(answer=_("You don't have access to a bot. Please contact the administrator."), message_id=-1), ]
             user = await self.__get_or_create_user(telegram_user, s)
+            
+            provider = self.__get_provider(user.provider)
+            if not provider.is_image_supported():
+                raise ProviderImageNotSupportedError(f"Provider {provider.provider_name} does not support images")
 
             pictures_base64 = []
             question = None
@@ -187,7 +191,7 @@ class Manager:
                 else:
                     return None
 
-            answer = await self.__get_provider(user.provider).image(pictures_base64, question=question, chat_history=chat_history)
+            answer = await provider.image(pictures_base64, question=question, chat_history=chat_history)
 
             if answer.status == answer.Status.ERROR:
                 message.is_error = True
@@ -257,6 +261,9 @@ class Manager:
             selected_provider = Settings.PROVIDER
 
         return get_provider(selected_provider)
+    
+    def is_image_supported(self) -> bool:
+        return self.__get_provider().is_image_supported()
 
     async def __check_user_access(self, telegram_user: TelegramUser):
         if not Settings.ALLOWED_USERS:

@@ -12,7 +12,7 @@ from fortytwo.database.models import Message, User
 from fortytwo.logger import logger
 from fortytwo.manager import Manager
 from fortytwo.providers import available_providers
-from fortytwo.providers.exceptions import ProviderError
+from fortytwo.providers.exceptions import ProviderError, ProviderImageNotSupportedError
 from fortytwo.settings import Settings
 from fortytwo.types import AIAnswer, TelegramMessage, TelegramUser
 
@@ -53,15 +53,17 @@ class TelegramBot:
         telegram_message = TelegramMessage(text=tg_update.message.caption, file=photo_file, media_group_id=tg_update.message.media_group_id)
         telegram_user = TelegramUser(id=tg_update.message.chat.id, username=tg_update.message.chat.username,
                                      title=tg_update.message.chat.title)
-
+            
         try:
             coro = self.manager.process_images(telegram_user, telegram_message)
             messages = await self.__execute_with_typing(coro, tg_update.message.chat.id)
             await self.__send_messages(tg_update, messages)
+        except ProviderImageNotSupportedError as e:
+            await self.application.bot.send_message(tg_update.message.chat.id, _("This provider does not support images."))
+            logger.error(f"{telegram_user.username} IMAGE | ProviderImageNotSupportedError: {e}")
         except ProviderError as e:
             await self.application.bot.send_message(tg_update.message.chat.id, _("Something went wrong with the AI provider during processing images. Please try again later."))
-            logger.error(f"{telegram_user.username} IMAGE | ProviderError: {e}")
-            return            
+            logger.error(f"{telegram_user.username} IMAGE | ProviderError: {e}")         
 
     async def __set_commands(self):
         await self.application.bot.set_my_commands([

@@ -17,7 +17,7 @@ class AnthropicProvider(BaseProvider):
 
     async def text(self, question, chat_history: UniversalChatHistory = (), system_prompt=None) -> AIResponse:
         headers = self.__prepare_headers()
-        payload = self.__prepare_payload(text=question, chat_history=chat_history, system_prompt=system_prompt)
+        payload = self._prepare_payload(text=question, chat_history=chat_history, system_prompt=system_prompt)
 
         ai_response = await self.__make_request(headers=headers, payload=payload)
 
@@ -26,7 +26,7 @@ class AnthropicProvider(BaseProvider):
     async def image(self, base64_images: list, question, chat_history: UniversalChatHistory = (),
                     system_prompt=None) -> AIResponse:
         headers = self.__prepare_headers()
-        payload = self.__prepare_payload(text=question, base64_images=base64_images, chat_history=chat_history, system_prompt=system_prompt)
+        payload = self._prepare_payload(text=question, base64_images=base64_images, chat_history=chat_history, system_prompt=system_prompt)
 
         ai_response = await self.__make_request(headers=headers, payload=payload)
 
@@ -41,7 +41,7 @@ class AnthropicProvider(BaseProvider):
 
         return headers
 
-    def __convert_chat_history(self, chat_history: UniversalChatHistory) -> list:
+    def _convert_chat_history(self, chat_history: UniversalChatHistory) -> list:
         converted_chat_history = []
 
         for message in chat_history:
@@ -91,8 +91,8 @@ class AnthropicProvider(BaseProvider):
 
         return converted_chat_history
 
-    def __prepare_payload(self, text: str, base64_images=(), chat_history: UniversalChatHistory = None, system_prompt: str = None) -> dict:
-        chat_history = self.__convert_chat_history(chat_history)
+    def _prepare_payload(self, text: str, base64_images=(), chat_history: UniversalChatHistory = None, system_prompt: str = None) -> dict:
+        chat_history = self._convert_chat_history(chat_history)
 
         pictures: list[dict] = []
 

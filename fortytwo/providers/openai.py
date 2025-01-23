@@ -22,7 +22,7 @@ class OpenAIProvider(BaseProvider):
 
     async def text(self, question, chat_history: list[OpenAIChatMessage] = (), system_prompt=None) -> AIResponse:
         headers = self.__prepare_headers()
-        payload = self.__prepare_payload(text=question, chat_history=chat_history, system_prompt=system_prompt)
+        payload = self._prepare_payload(text=question, chat_history=chat_history, system_prompt=system_prompt)
 
         ai_response = await self.__make_request(headers=headers, payload=payload)
 
@@ -31,7 +31,7 @@ class OpenAIProvider(BaseProvider):
     async def image(self, base64_images: list, question, chat_history: list[OpenAIChatMessage] = (),
                     system_prompt=None) -> AIResponse:
         headers = self.__prepare_headers()
-        payload = self.__prepare_payload(text=question, base64_images=base64_images, chat_history=chat_history, system_prompt=system_prompt)
+        payload = self._prepare_payload(text=question, base64_images=base64_images, chat_history=chat_history, system_prompt=system_prompt)
 
         ai_response = await self.__make_request(headers=headers, payload=payload)
 
@@ -45,7 +45,7 @@ class OpenAIProvider(BaseProvider):
 
         return headers
 
-    def __convert_chat_history(self, chat_history: UniversalChatHistory) -> list[OpenAIChatMessage]:
+    def _convert_chat_history(self, chat_history: UniversalChatHistory) -> list[OpenAIChatMessage]:
         converted_chat_history = []
 
         for message in chat_history:
@@ -84,7 +84,7 @@ class OpenAIProvider(BaseProvider):
 
         return converted_chat_history
 
-    def __prepare_payload(self, text, base64_images=(), chat_history: list = (),
+    def _prepare_payload(self, text, base64_images=(), chat_history: list = (),
                           system_prompt: str = None) -> OpenAIPayload:
         if not system_prompt:
             system_prompt = self.default_system_prompt
@@ -106,7 +106,7 @@ class OpenAIProvider(BaseProvider):
                     "role": "system",
                     "content": system_prompt
                 },
-                *self.__convert_chat_history(chat_history),
+                *self._convert_chat_history(chat_history),
                 {
                     "role": "user",
                     "content": [
@@ -126,10 +126,13 @@ class OpenAIProvider(BaseProvider):
     async def __make_request(self, headers: RequestHeaders, payload: OpenAIPayload) -> AIResponse:
         url = f'{self.base_api_url}/chat/completions'
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
-            async with session.post(url, headers=headers, data=json.dumps(payload)) as resp:
+            print(json.dumps(payload, indent=4))
+            async with session.post(url, headers=headers, data=json.dumps(payload, indent=4)) as resp:
                 try:
+                    print(111)
+                    print(1111, await resp.text())
                     response = await resp.json()
-                
+                    
                     ai_response = AIResponse(
                         content=response['choices'][0]['message']['content'],
                         completion_tokens=response['usage']['completion_tokens'],
@@ -138,8 +141,8 @@ class OpenAIProvider(BaseProvider):
                         status=AIResponse.Status.OK,
                         provider=self.provider_name
                     )
-                except ContentTypeError:
-                    raise ProviderError(f"Failed to make request to {self.provider_name} API.")
+                except ContentTypeError as e:
+                    raise ProviderError(f"Failed to make request to {self.provider_name} API.", e)
                 except KeyError as e:
                     ai_response = AIResponse(
                         content=f"Failed to make request to OpenAI API. Response: {response}",

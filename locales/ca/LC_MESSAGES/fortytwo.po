@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-23 13:47+0100\n"
+"POT-Creation-Date: 2025-01-23 14:31+0100\n"
 "PO-Revision-Date: 2024-06-30 15:46+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -22,31 +22,39 @@ msgstr ""
 msgid ""
 "Something went wrong with the AI provider during processing text. Please try "
 "again later."
-msgstr "S'ha produït un error amb el proveïdor d'IA durant el processament del text. Si us plau, torneu-ho a provar més tard."
+msgstr ""
+"S'ha produït un error amb el proveïdor d'IA durant el processament del text. "
+"Si us plau, torneu-ho a provar més tard."
 
 #: fortytwo/tg.py:62
+msgid "This provider does not support images."
+msgstr "Aquest proveïdor no admet imatges."
+
+#: fortytwo/tg.py:65
 msgid ""
 "Something went wrong with the AI provider during processing images. Please "
 "try again later."
-msgstr "S'ha produït un error amb el proveïdor d'IA durant el processament d'imatges. Si us plau, torneu-ho a provar més tard."
+msgstr ""
+"S'ha produït un error amb el proveïdor d'IA durant el processament "
+"d'imatges. Si us plau, torneu-ho a provar més tard."
 
-#: fortytwo/tg.py:68
+#: fortytwo/tg.py:70
 msgid "Start the bot"
 msgstr "Inicia el bot"
 
-#: fortytwo/tg.py:69
+#: fortytwo/tg.py:71
 msgid "Reset the bot"
 msgstr "Reinicia el bot"
 
-#: fortytwo/tg.py:70
+#: fortytwo/tg.py:72
 msgid "Summarize the dialog"
 msgstr "Resumeix el diàleg"
 
-#: fortytwo/tg.py:71
+#: fortytwo/tg.py:73
 msgid "Set the AI provider"
 msgstr "Estableix el proveïdor d'IA"
 
-#: fortytwo/tg.py:80
+#: fortytwo/tg.py:82
 msgid ""
 "Hello!\n"
 "\n"
@@ -64,20 +72,20 @@ msgstr ""
 "Per canviar de proveïdor d'IA utilitza la comanda /provider\n"
 "Per esborrar el teu historial de diàleg utilitza la comanda /reset"
 
-#: fortytwo/tg.py:94
+#: fortytwo/tg.py:96
 msgid "Your dialog history has been cleared."
 msgstr "El teu historial de diàleg s'ha esborrat."
 
-#: fortytwo/tg.py:111
+#: fortytwo/tg.py:113
 msgid "Processing..."
 msgstr "Processant..."
 
-#: fortytwo/tg.py:119
+#: fortytwo/tg.py:121
 #, python-brace-format
 msgid "Your current provider is *{provider}* \n"
 msgstr "El teu proveïdor actual és *{provider}* \n"
 
-#: fortytwo/tg.py:137
+#: fortytwo/tg.py:139
 #, python-brace-format
 msgid ""
 "Answer from *{provider_name}*:\n"
@@ -88,11 +96,11 @@ msgstr ""
 "\n"
 "{answer}"
 
-#: fortytwo/tg.py:147
+#: fortytwo/tg.py:149
 msgid "Ask another AI"
 msgstr "Pregunta a una altra IA"
 
-#: fortytwo/tg.py:162
+#: fortytwo/tg.py:164
 #, python-brace-format
 msgid ""
 "Your current provider is *{provider}* \n"
@@ -101,7 +109,7 @@ msgstr ""
 "El teu proveïdor actual és *{provider}* \n"
 "Selecciona un nou proveïdor"
 
-#: fortytwo/tg.py:244
+#: fortytwo/tg.py:246
 msgid "The operation took too long and was canceled."
 msgstr "L'operació ha trigat massa i s'ha cancel·lat."
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-23 13:47+0100\n"
+"POT-Creation-Date: 2025-01-23 14:31+0100\n"
 "PO-Revision-Date: 2024-06-30 15:46+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -24,28 +24,32 @@ msgid ""
 msgstr ""
 
 #: fortytwo/tg.py:62
+msgid "This provider does not support images."
+msgstr ""
+
+#: fortytwo/tg.py:65
 msgid ""
 "Something went wrong with the AI provider during processing images. Please "
 "try again later."
 msgstr ""
 
-#: fortytwo/tg.py:68
+#: fortytwo/tg.py:70
 msgid "Start the bot"
 msgstr ""
 
-#: fortytwo/tg.py:69
+#: fortytwo/tg.py:71
 msgid "Reset the bot"
 msgstr ""
 
-#: fortytwo/tg.py:70
+#: fortytwo/tg.py:72
 msgid "Summarize the dialog"
 msgstr ""
 
-#: fortytwo/tg.py:71
+#: fortytwo/tg.py:73
 msgid "Set the AI provider"
 msgstr ""
 
-#: fortytwo/tg.py:80
+#: fortytwo/tg.py:82
 msgid ""
 "Hello!\n"
 "\n"
@@ -56,20 +60,20 @@ msgid ""
 "To clear your dialog history use /reset command"
 msgstr ""
 
-#: fortytwo/tg.py:94
+#: fortytwo/tg.py:96
 msgid "Your dialog history has been cleared."
 msgstr "Your dialog history has been cleared."
 
-#: fortytwo/tg.py:111
+#: fortytwo/tg.py:113
 msgid "Processing..."
 msgstr "Processing..."
 
-#: fortytwo/tg.py:119
+#: fortytwo/tg.py:121
 #, python-brace-format
 msgid "Your current provider is *{provider}* \n"
 msgstr ""
 
-#: fortytwo/tg.py:137
+#: fortytwo/tg.py:139
 #, python-brace-format
 msgid ""
 "Answer from *{provider_name}*:\n"
@@ -77,11 +81,11 @@ msgid ""
 "{answer}"
 msgstr ""
 
-#: fortytwo/tg.py:147
+#: fortytwo/tg.py:149
 msgid "Ask another AI"
 msgstr ""
 
-#: fortytwo/tg.py:162
+#: fortytwo/tg.py:164
 #, python-brace-format
 msgid ""
 "Your current provider is *{provider}* \n"
@@ -90,7 +94,7 @@ msgstr ""
 "Your current provider is *{provider}* \n"
 "Select new provider"
 
-#: fortytwo/tg.py:244
+#: fortytwo/tg.py:246
 msgid "The operation took too long and was canceled."
 msgstr "The operation took too long and was canceled."
 
