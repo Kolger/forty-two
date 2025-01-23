@@ -328,6 +328,6 @@ class Manager:
             s.add(new_message)
             await s.commit()
             await self.__log_message(TelegramUser(id=message.user.chat_id, username=message.user.username, title=message.user.title),
-                                     new_message, f'ASK ANOTHER ({provider_name})')
+                                     new_message, f'ASK ANOTHER ({provider_name})', provider=provider_name)
 
             return AIAnswer(answer=str(answer), message_id=message_id)
