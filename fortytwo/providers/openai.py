@@ -14,6 +14,8 @@ class OpenAIProvider(BaseProvider):
         self.api_key = api_key
         self.model = Settings.OPENAI_MODEL
         self.default_system_prompt = Settings.SYSTEM_PROMPT
+        self.provider_name = "OPENAI"
+        self.base_api_url = "https://api.openai.com/v1"
 
     async def text(self, question, chat_history: list[OpenAIChatMessage] = (), system_prompt=None) -> AIResponse:
         headers = self.__prepare_headers()
@@ -35,7 +37,7 @@ class OpenAIProvider(BaseProvider):
     def __prepare_headers(self):
         headers: RequestHeaders = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY')}"
+            "Authorization": f"Bearer {self.api_key}"
         }
 
         return headers
@@ -119,7 +121,7 @@ class OpenAIProvider(BaseProvider):
         return payload
 
     async def __make_request(self, headers: RequestHeaders, payload: OpenAIPayload) -> AIResponse:
-        url = 'https://api.openai.com/v1/chat/completions'
+        url = f'{self.base_api_url}/chat/completions'
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
             async with session.post(url, headers=headers, data=json.dumps(payload)) as resp:
                 response = await resp.json()
@@ -131,7 +133,7 @@ class OpenAIProvider(BaseProvider):
                         prompt_tokens=response['usage']['prompt_tokens'],
                         total_tokens=response['usage']['total_tokens'],
                         status=AIResponse.Status.OK,
-                        provider="OPENAI"
+                        provider=self.provider_name
                     )
                 except KeyError as e:
                     ai_response = AIResponse(
@@ -139,7 +141,7 @@ class OpenAIProvider(BaseProvider):
                         completion_tokens=0,
                         prompt_tokens=0,
                         total_tokens=0,
-                        provider="OPENAI",
+                        provider=self.provider_name,
                         status=AIResponse.Status.ERROR
                     )
 

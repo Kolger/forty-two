@@ -1,6 +1,7 @@
 from .openai import OpenAIProvider
 from .gemini import GeminiProvider
 from .anthropic import AnthropicProvider
+from .deepseek import DeepSeekProvider
 from .base import BaseProvider
 from fortytwo.settings import Settings
 
@@ -8,6 +9,7 @@ PROVIDERS = {
     "OPENAI": OpenAIProvider,
     "GEMINI": GeminiProvider,
     "ANTHROPIC": AnthropicProvider,
+    "DEEPSEEK": DeepSeekProvider,
 }
 
 
