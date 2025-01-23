@@ -1,0 +1,14 @@
+[project]
+name = "fortytwo"
+version = "1.1.0"
+description = "A Telegram bot that allows you to create your own ChatGPT in Telegram."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiohttp==3.11.10",
+    "aiosqlite==0.20.0",
+    "alembic==1.14.0",
+    "python-dotenv==1.0.1",
+    "python-telegram-bot==21.9",
+    "sqlalchemy[asyncio]==2.0.36",
+]
