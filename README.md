@@ -1,8 +1,8 @@
-Forty-two is a Telegram bot that allows you to create your own ChatGPT in Telegram with OpenAI GPT, Google Gemini, Anthropic Claude and DeepSeek models.
+Forty-two is a Telegram bot that allows you to create your own ChatGPT in Telegram with OpenAI GPT, Google Gemini, Anthropic Claude, DeepSeek, and OpenRouter models.
 
 ## Features
 
-- Easy to use and deploy. You just need to set the Telegram and OpenAI/Gemini/Anthropic/DeepSeek API keys and run the bot.
+- Easy to use and deploy. You just need to set the Telegram and OpenAI/Gemini/Anthropic/DeepSeek/OpenRouter API keys and run the bot.
 - Switching between different AI providers with saving the correspondence history.
 - Ask another AI provider for a response to the same question.
 - GPT Vision. You can send images to the bot and ask questions about them.
@@ -25,6 +25,7 @@ OPENAI_API_KEY=your_openai_api_key
 # GEMINI_API_KEY=your_gemini_api_key
 # ANTHROPIC_API_KEY=your_anthropic_api_key
 # DEEPSEEK_API_KEY=your_deepseek_api_key
+# OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
 ### 2. Run the bot
@@ -52,6 +53,7 @@ python main.py
 | GEMINI_API_KEY        | Google Gemini API key.                                                                                                                                                                  | -                                               |
 | ANTHROPIC_API_KEY     | Anthropic API key.                                                                                                                                                                      | -                                               |
 | DEEPSEEK_API_KEY      | DeepSeek API key.                                                                                                                                                                       | -                                               |
+| OPENROUTER_API_KEY    | OpenRouter API key.                                                                                                                                                                     | -                                               |
 | PROVIDER              | Default provider for users. Users then can change their default provider with /provider command. Please note that API_KEY for selected provider is required.                            | OPENAI                                          |
 | DB_STRING             | Database connection string.                                                                                                                                                             | sqlite+aiosqlite:///db.sqlite3                  |
 | MAX_COMPLETION_TOKENS | Maximum tokens for completion.                                                                                                                                                          | 4096                                            |
@@ -61,6 +63,7 @@ python main.py
 | ANTHROPIC_MODEL       | Anthropic model.                                                                                                                                                                        | claude-3-5-sonnet-20240620                      |
 | GEMINI_MODEL          | Gemini model.                                                                                                                                                                           | gemini-1.5-flash                                |
 | DEEPSEEK_MODEL        | DeepSeek model.                                                                                                                                                                         | deepseek-chat                                    |
+| OPENROUTER_MODEL      | OpenRouter model (see OpenRouter model IDs).                                                                                                                                            | openrouter/auto                                  |
 | ALLOWED_USERS         | Comma-separated list of Telegram users who can interact with the bot. You can use both Telegram IDs or Usernames. If None, everyone can interact with the bot. Example: durov,238373289 | None                                            |
 | LOG_MESSAGES          | Log user messages to a file and the console.                                                                                                                                            | False                                           |
 | HISTORY_EXPIRATION    | If the last message from a user occurred more than the specified time in minutes, the message history will be reset.                                                                    | 30                                              |
@@ -73,6 +76,7 @@ python main.py
 - [Gemini API key](https://ai.google.dev/gemini-api)
 - [Anthropic API key](https://console.anthropic.com/dashboard)
 - [DeepSeek API key](https://platform.deepseek.com/api_keys)
+- [OpenRouter API key](https://openrouter.ai/)
 
 
 ## License
