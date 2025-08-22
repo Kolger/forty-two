@@ -243,7 +243,7 @@ class TelegramBot:
             return result
         except asyncio.TimeoutError:
             typing_task.cancel()
-            await self.application.bot.send_message(chat_id, _("The operation took too long and was canceled."))
+            await self.application.bot.send_message(chat_id, _("The operation took too long and was canceled. If the problem persists, please try to change a different AI provider with /provider command."))
             return False
         except Exception as e:
             typing_task.cancel()

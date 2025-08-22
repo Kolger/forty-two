@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-23 14:31+0100\n"
+"POT-Creation-Date: 2025-08-22 22:06+0200\n"
 "PO-Revision-Date: 2024-06-30 15:46+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: fortytwo/tg.py:48
+#: fortytwo/tg.py:49
 msgid ""
 "Something went wrong with the AI provider during processing text. Please try "
 "again later."
@@ -26,11 +26,11 @@ msgstr ""
 "Algo salió mal con el proveedor de IA durante el procesamiento del texto. "
 "Por favor, inténtalo de nuevo más tarde."
 
-#: fortytwo/tg.py:62
+#: fortytwo/tg.py:63
 msgid "This provider does not support images."
 msgstr "Este proveedor no soporta imágenes."
 
-#: fortytwo/tg.py:65
+#: fortytwo/tg.py:66
 msgid ""
 "Something went wrong with the AI provider during processing images. Please "
 "try again later."
@@ -38,23 +38,23 @@ msgstr ""
 "Algo salió mal con el proveedor de IA durante el procesamiento de imágenes. "
 "Por favor, inténtalo de nuevo más tarde."
 
-#: fortytwo/tg.py:70
+#: fortytwo/tg.py:71
 msgid "Start the bot"
 msgstr "Iniciar el bot"
 
-#: fortytwo/tg.py:71
+#: fortytwo/tg.py:72
 msgid "Reset the bot"
 msgstr "Reiniciar el bot"
 
-#: fortytwo/tg.py:72
+#: fortytwo/tg.py:73
 msgid "Summarize the dialog"
 msgstr "Resumir el diálogo"
 
-#: fortytwo/tg.py:73
+#: fortytwo/tg.py:74
 msgid "Set the AI provider"
 msgstr "Establecer el proveedor de IA"
 
-#: fortytwo/tg.py:82
+#: fortytwo/tg.py:83
 msgid ""
 "Hello!\n"
 "\n"
@@ -72,20 +72,20 @@ msgstr ""
 "Para cambiar de proveedor de IA usa el comando /provider\n"
 "Para borrar tu historial de diálogo usa el comando /reset"
 
-#: fortytwo/tg.py:96
+#: fortytwo/tg.py:97
 msgid "Your dialog history has been cleared."
 msgstr "Tu historial de diálogo ha sido borrado."
 
-#: fortytwo/tg.py:113
+#: fortytwo/tg.py:114
 msgid "Processing..."
 msgstr "Procesando..."
 
-#: fortytwo/tg.py:121
+#: fortytwo/tg.py:122
 #, python-brace-format
 msgid "Your current provider is *{provider}* \n"
 msgstr "Tu proveedor actual es *{provider}* \n"
 
-#: fortytwo/tg.py:139
+#: fortytwo/tg.py:138
 #, python-brace-format
 msgid ""
 "Answer from *{provider_name}*:\n"
@@ -96,11 +96,11 @@ msgstr ""
 "\n"
 "{answer}"
 
-#: fortytwo/tg.py:149
+#: fortytwo/tg.py:148
 msgid "Ask another AI"
 msgstr "Preguntar a otra IA"
 
-#: fortytwo/tg.py:164
+#: fortytwo/tg.py:163
 #, python-brace-format
 msgid ""
 "Your current provider is *{provider}* \n"
@@ -109,9 +109,13 @@ msgstr ""
 "Tu proveedor actual es *{provider}* \n"
 "Selecciona un nuevo proveedor"
 
-#: fortytwo/tg.py:246
-msgid "The operation took too long and was canceled."
-msgstr "La operación tardó demasiado y fue cancelada."
+#: fortytwo/tg.py:247
+msgid ""
+"The operation took too long and was canceled. If the problem persists, "
+"please try to change a different AI provider with /provider command."
+msgstr ""
+"La operación tardó demasiado y fue cancelada. Si el problema persiste, "
+"prueba a cambiar a otro proveedor de IA con el comando /provider."
 
 #: fortytwo/manager.py:30
 #, python-brace-format
@@ -136,3 +140,6 @@ msgstr ""
 "*Tu diálogo fue resumido:* \n"
 "\n"
 "{sum_results}"
+
+#~ msgid "The operation took too long and was canceled."
+#~ msgstr "La operación tardó demasiado y fue cancelada."

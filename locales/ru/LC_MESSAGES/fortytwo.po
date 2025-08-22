@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-23 14:31+0100\n"
+"POT-Creation-Date: 2025-08-22 22:06+0200\n"
 "PO-Revision-Date: 2024-06-30 15:46+0200\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -19,18 +19,18 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: fortytwo/tg.py:48
+#: fortytwo/tg.py:49
 msgid ""
 "Something went wrong with the AI provider during processing text. Please try "
 "again later."
 msgstr ""
 "Что-то пошло не так с ИИ-провайдером при обработке текста. Попробуйте позже."
 
-#: fortytwo/tg.py:62
+#: fortytwo/tg.py:63
 msgid "This provider does not support images."
 msgstr "Этот провайдер не поддерживает изображения."
 
-#: fortytwo/tg.py:65
+#: fortytwo/tg.py:66
 msgid ""
 "Something went wrong with the AI provider during processing images. Please "
 "try again later."
@@ -38,23 +38,23 @@ msgstr ""
 "Что-то пошло не так с ИИ-провайдером при обработке изображений. Попробуйте "
 "позже."
 
-#: fortytwo/tg.py:70
+#: fortytwo/tg.py:71
 msgid "Start the bot"
 msgstr "Запустить бота"
 
-#: fortytwo/tg.py:71
+#: fortytwo/tg.py:72
 msgid "Reset the bot"
 msgstr "Сбросить диалог"
 
-#: fortytwo/tg.py:72
+#: fortytwo/tg.py:73
 msgid "Summarize the dialog"
 msgstr "Суммировать диалог"
 
-#: fortytwo/tg.py:73
+#: fortytwo/tg.py:74
 msgid "Set the AI provider"
 msgstr "Установить ИИ-провайдера"
 
-#: fortytwo/tg.py:82
+#: fortytwo/tg.py:83
 msgid ""
 "Hello!\n"
 "\n"
@@ -72,20 +72,20 @@ msgstr ""
 "Для смены ИИ-провайдера используйте команду /provider.\n"
 "Для очистки истории диалога используйте команду /reset."
 
-#: fortytwo/tg.py:96
+#: fortytwo/tg.py:97
 msgid "Your dialog history has been cleared."
 msgstr "История вашего диалога была очищена."
 
-#: fortytwo/tg.py:113
+#: fortytwo/tg.py:114
 msgid "Processing..."
 msgstr "Обработка..."
 
-#: fortytwo/tg.py:121
+#: fortytwo/tg.py:122
 #, python-brace-format
 msgid "Your current provider is *{provider}* \n"
 msgstr "Ваш текущий ИИ - *{provider}* \n"
 
-#: fortytwo/tg.py:139
+#: fortytwo/tg.py:138
 #, python-brace-format
 msgid ""
 "Answer from *{provider_name}*:\n"
@@ -96,11 +96,11 @@ msgstr ""
 "\n"
 "{answer}"
 
-#: fortytwo/tg.py:149
+#: fortytwo/tg.py:148
 msgid "Ask another AI"
 msgstr "Спросить у другого ИИ"
 
-#: fortytwo/tg.py:164
+#: fortytwo/tg.py:163
 #, python-brace-format
 msgid ""
 "Your current provider is *{provider}* \n"
@@ -109,9 +109,14 @@ msgstr ""
 "Ваш текущий ИИ - *{provider}* \n"
 "Выберите нового ИИ"
 
-#: fortytwo/tg.py:246
-msgid "The operation took too long and was canceled."
-msgstr "Операция заняла слишком много времени и была отменена."
+#: fortytwo/tg.py:247
+msgid ""
+"The operation took too long and was canceled. If the problem persists, "
+"please try to change a different AI provider with /provider command."
+msgstr ""
+"Операция заняла слишком много времени и была отменена. Если проблема "
+"сохраняется, попробуйте переключиться на другого провайдера ИИ с помощью "
+"команды /provider."
 
 #: fortytwo/manager.py:30
 #, python-brace-format
@@ -136,3 +141,6 @@ msgstr ""
 "*Ваш диалог был суммирован:* \n"
 "\n"
 "{sum_results}"
+
+#~ msgid "The operation took too long and was canceled."
+#~ msgstr "Операция заняла слишком много времени и была отменена."
