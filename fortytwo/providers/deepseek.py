@@ -49,10 +49,9 @@ class DeepSeekProvider(OpenAIProvider):
                 *self._convert_chat_history(chat_history),
                 {
                     "role": "user",
-                    "content":text
+                    "content": text
                 }
-            ],
-            "max_tokens": Settings.MAX_COMPLETION_TOKENS
+            ]
         }
 
         return payload
