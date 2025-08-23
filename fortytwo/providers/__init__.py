@@ -3,6 +3,7 @@ from .gemini import GeminiProvider
 from .anthropic import AnthropicProvider
 from .deepseek import DeepSeekProvider
 from .base import BaseProvider
+from .openrouter import OpenRouterProvider
 from fortytwo.settings import Settings
 
 PROVIDERS = {
@@ -10,6 +11,7 @@ PROVIDERS = {
     "GEMINI": GeminiProvider,
     "ANTHROPIC": AnthropicProvider,
     "DEEPSEEK": DeepSeekProvider,
+    "OPENROUTER": OpenRouterProvider,
 }
 
 
