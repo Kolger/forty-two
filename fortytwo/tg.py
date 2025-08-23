@@ -42,7 +42,8 @@ class TelegramBot:
         try:
             coro = self.manager.process_text(telegram_user, tg_update.message.text)
             messages = await self.__execute_with_typing(coro, tg_update.message.chat.id)
-            await self.__send_messages(tg_update, messages)
+            if messages:
+                await self.__send_messages(tg_update, messages)
         except ProviderError as e:
             logger.error(f"{telegram_user.username} TEXT | ProviderError: {e}")
             await self.application.bot.send_message(tg_update.message.chat.id, _("Something went wrong with the AI provider during processing text. Please try again later."))
@@ -132,9 +133,7 @@ class TelegramBot:
                 provider_name = query.data.split("_")[1]
                 keyboard = self.__get_inline_keyboard_ask_another_ai(message_id)
                 await query.edit_message_reply_markup(keyboard)
-                print(123)
                 coro = self.manager.ask_another_provider(message_id, provider_name)
-                print(456)
                 answer = await self.__execute_with_typing(coro, query.message.chat.id)
                 answer_text = _("Answer from *{provider_name}*:\n\n{answer}").format(provider_name=provider_name, answer=answer.answer)
 
@@ -238,12 +237,12 @@ class TelegramBot:
                 await asyncio.sleep(2)
         try:
             typing_task = asyncio.create_task(show_typing())
-            result = await asyncio.wait_for(coro, timeout=60)
+            result = await asyncio.wait_for(coro, timeout=300)
             typing_task.cancel()
             return result
         except asyncio.TimeoutError:
             typing_task.cancel()
-            await self.application.bot.send_message(chat_id, _("The operation took too long and was canceled."))
+            await self.application.bot.send_message(chat_id, _("The operation took too long and was canceled. If the problem persists, please try to change a different AI provider with /provider command."))
             return False
         except Exception as e:
             typing_task.cancel()

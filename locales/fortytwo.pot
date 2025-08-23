@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-23 14:31+0100\n"
+"POT-Creation-Date: 2025-08-22 22:06+0200\n"
 "PO-Revision-Date: 2024-06-30 15:46+0200\n"
 "Last-Translator: Nikita Smirnov <kolger.ru@gmail.com>\n"
 "Language-Team: Nikita Smirnov <kolger.ru@gmail.com>\n"
@@ -17,39 +17,39 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: fortytwo/tg.py:48
+#: fortytwo/tg.py:49
 msgid ""
 "Something went wrong with the AI provider during processing text. Please try "
 "again later."
 msgstr ""
 
-#: fortytwo/tg.py:62
+#: fortytwo/tg.py:63
 msgid "This provider does not support images."
 msgstr ""
 
-#: fortytwo/tg.py:65
+#: fortytwo/tg.py:66
 msgid ""
 "Something went wrong with the AI provider during processing images. Please "
 "try again later."
 msgstr ""
 
-#: fortytwo/tg.py:70
+#: fortytwo/tg.py:71
 msgid "Start the bot"
 msgstr ""
 
-#: fortytwo/tg.py:71
+#: fortytwo/tg.py:72
 msgid "Reset the bot"
 msgstr ""
 
-#: fortytwo/tg.py:72
+#: fortytwo/tg.py:73
 msgid "Summarize the dialog"
 msgstr ""
 
-#: fortytwo/tg.py:73
+#: fortytwo/tg.py:74
 msgid "Set the AI provider"
 msgstr ""
 
-#: fortytwo/tg.py:82
+#: fortytwo/tg.py:83
 msgid ""
 "Hello!\n"
 "\n"
@@ -60,20 +60,20 @@ msgid ""
 "To clear your dialog history use /reset command"
 msgstr ""
 
-#: fortytwo/tg.py:96
+#: fortytwo/tg.py:97
 msgid "Your dialog history has been cleared."
 msgstr ""
 
-#: fortytwo/tg.py:113
+#: fortytwo/tg.py:114
 msgid "Processing..."
 msgstr ""
 
-#: fortytwo/tg.py:121
+#: fortytwo/tg.py:122
 #, python-brace-format
 msgid "Your current provider is *{provider}* \n"
 msgstr ""
 
-#: fortytwo/tg.py:139
+#: fortytwo/tg.py:138
 #, python-brace-format
 msgid ""
 "Answer from *{provider_name}*:\n"
@@ -81,19 +81,21 @@ msgid ""
 "{answer}"
 msgstr ""
 
-#: fortytwo/tg.py:149
+#: fortytwo/tg.py:148
 msgid "Ask another AI"
 msgstr ""
 
-#: fortytwo/tg.py:164
+#: fortytwo/tg.py:163
 #, python-brace-format
 msgid ""
 "Your current provider is *{provider}* \n"
 "Select new provider"
 msgstr ""
 
-#: fortytwo/tg.py:246
-msgid "The operation took too long and was canceled."
+#: fortytwo/tg.py:247
+msgid ""
+"The operation took too long and was canceled. If the problem persists, "
+"please try to change a different AI provider with /provider command."
 msgstr ""
 
 #: fortytwo/manager.py:30

@@ -117,19 +117,18 @@ class OpenAIProvider(BaseProvider):
                         *pictures
                     ]
                 }
-            ],
-            "max_tokens": Settings.MAX_COMPLETION_TOKENS
+            ]
         }
 
         return payload
 
     async def __make_request(self, headers: RequestHeaders, payload: OpenAIPayload) -> AIResponse:
         url = f'{self.base_api_url}/chat/completions'
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
+
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300)) as session:
             async with session.post(url, headers=headers, data=json.dumps(payload)) as resp:
                 try:
                     response = await resp.json()
-                    
                     ai_response = AIResponse(
                         content=response['choices'][0]['message']['content'],
                         completion_tokens=response['usage']['completion_tokens'],
