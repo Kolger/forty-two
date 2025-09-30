@@ -10,7 +10,7 @@ class Settings:
     ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', None)
     DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY', None)
     OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', None)
-    ANTHROPIC_MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514')
+    ANTHROPIC_MODEL = os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-4-5-20250929')
     GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-pro')
     DEEPSEEK_MODEL = os.environ.get('DEEPSEEK_MODEL', 'deepseek-reasoner')
     OPENROUTER_MODEL = os.environ.get('OPENROUTER_MODEL', 'openrouter/auto')
